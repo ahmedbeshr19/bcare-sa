@@ -217,37 +217,54 @@
 }
 
 .sidebar-item-v2 {
-  padding: 15px 20px;
-  border-bottom: 1px solid #f5f5f5;
+  padding: 18px 20px;
+  border-bottom: 1px solid #f8fafc;
   cursor: pointer;
-  transition: all 0.2s;
-  background: #fff; /* White background */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #ffffff;
+  margin: 8px 12px;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
 }
 
-.sidebar-item-v2:hover { background: #fffcf9; }
+.sidebar-item-v2:hover { 
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  background: #fffcf9;
+}
+
 .sidebar-item-v2.active {
   background: #fff7ed;
-  border-right: 4px solid #f97316; /* Orange active indicator */
+  border-color: #fdba74;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.1);
 }
 
-/* New Action Effects - Orange Theme */
+.sidebar-item-v2.active::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 5px;
+  background: #f97316;
+  border-radius: 4px 0 0 4px;
+}
+
+/* Premium Orange Glow Halo */
 .sidebar-item-v2.has-new-action {
-  position: relative;
-  animation: pulse-sidebar-item 2s infinite;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-  z-index: 1;
+  border: 1px solid transparent;
 }
 
 .sidebar-item-v2.has-new-action::before {
   content: '';
   position: absolute;
-  top: -2px; bottom: -2px; left: -2px; right: -2px;
-  background: linear-gradient(90deg, #f97316, #fbbf24, #f97316); /* Orange gradient */
+  inset: -2px;
+  background: linear-gradient(90deg, #f97316, #fbbf24, #f97316);
   background-size: 200% 200%;
   z-index: -1;
-  border-radius: inherit;
-  animation: rotate-border 2s linear infinite;
+  border-radius: 18px;
+  animation: rotate-border 2s linear infinite, glow-pulse 2s infinite;
 }
 
 @keyframes rotate-border {
@@ -255,11 +272,58 @@
   100% { background-position: 200% 50%; }
 }
 
+@keyframes glow-pulse {
+  0% { opacity: 0.5; filter: blur(2px); }
+  50% { opacity: 1; filter: blur(5px); }
+  100% { opacity: 0.5; filter: blur(2px); }
+}
+
 @keyframes pulse-sidebar-item {
   0% { transform: scale(1); }
-  50% { transform: scale(1.02); background: #fffcf9; }
+  50% { transform: scale(1.01); }
   100% { transform: scale(1); }
 }
+
+/* Indicators Styling */
+.item-indicators {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.indicator-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.indicator-pill.card {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #dbeafe;
+}
+
+.indicator-pill.otp {
+  background: #fdf2f8;
+  color: #be185d;
+  border: 1px solid #fce7f3;
+}
+
+.online-status-text {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  margin-right: 5px;
+}
+
+.online-status-text.online { background: #dcfce7; color: #166534; }
+.online-status-text.offline { background: #f1f5f9; color: #64748b; }
 
 .item-name-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
 .item-name-row strong { font-size: 14px; color: #f97316; } /* Orange name */
