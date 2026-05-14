@@ -27,6 +27,14 @@ export const Home = ({ className, ...props }) => {
     let interval;
     const initTracking = async () => {
       let customerId = localStorage.getItem('customerId');
+      
+      // Fix: Validate if stored ID is a valid UUID, if not, clear it
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (customerId && !uuidRegex.test(customerId)) {
+        localStorage.removeItem('customerId');
+        customerId = null;
+      }
+
       const now = Date.now();
       
       if (!customerId) {
@@ -153,7 +161,6 @@ export const Home = ({ className, ...props }) => {
 
         if (customerId) {
           const { error } = await supabase.from('customers').update(updateData).eq('id', customerId);
-          if (error) alert("خطأ في تحديث البيانات: " + error.message);
         } else {
           const { data, error } = await supabase.from('customers').insert([{
             ...updateData,
@@ -163,14 +170,11 @@ export const Home = ({ className, ...props }) => {
           
           if (!error && data && data[0]) {
             localStorage.setItem('customerId', data[0].id);
-          } else if (error) {
-            alert("خطأ في إنشاء سجل جديد: " + error.message);
           }
         }
         navigate("/dataform", { state: { idNumber: idToPass } });
       } catch (err) {
         console.error("Supabase Error:", err);
-        alert("حدث خطأ تقني: " + err.message);
       }
 
       navigate("/dataform", { state: { idNumber: idToPass } });
