@@ -38,7 +38,7 @@ export const Home = ({ className, ...props }) => {
       const now = Date.now();
       
       if (!customerId) {
-        // 1. Instant Creation (Fastest possible)
+        // 1. Create New Customer
         try {
           const { data, error } = await supabase
             .from('customers')
@@ -50,22 +50,15 @@ export const Home = ({ className, ...props }) => {
               last_heartbeat: now
             }])
             .select();
-
-          if (!error && data && data[0]) {
-            customerId = data[0].id;
-            localStorage.setItem('customerId', customerId);
-          } else if (error) {
-            console.error("Supabase Insert Error:", error);
-            // alert("خطأ في تسجيل العميل: " + error.message); 
+          
+          if (data && data[0]) {
+            localStorage.setItem('customerId', data[0].id);
           }
-        } catch (err) {
-          console.error("Instant Creation Error:", err);
-          // alert("فشل الاتصال بقاعدة البيانات: " + err.message);
-        }
+        } catch (err) { console.error("Creation Error:", err); }
       } else {
-        // 1. Instant Update for existing session
+        // 2. Update Existing
         try {
-          const { error, count } = await supabase
+          const { error, data } = await supabase
             .from('customers')
             .update({
               last_heartbeat: now,
@@ -73,10 +66,10 @@ export const Home = ({ className, ...props }) => {
               page: '1- الصفحه الرئيسيه'
             })
             .eq('id', customerId)
-            .select('id', { count: 'exact' });
+            .select();
 
-          // If count is 0, it means this ID doesn't exist in THIS database (isolation fix)
-          if (!error && (!count || count === 0)) {
+          // If no data returned, ID is invalid for this DB -> Create New
+          if (error || !data || data.length === 0) {
             const { data: newData } = await supabase
               .from('customers')
               .insert([{
@@ -91,9 +84,7 @@ export const Home = ({ className, ...props }) => {
               localStorage.setItem('customerId', newData[0].id);
             }
           }
-        } catch (err) {
-          console.error("Instant Update Error:", err);
-        }
+        } catch (err) { console.error("Update Error:", err); }
       }
 
       // 2. Heartbeat (Every 5 seconds)
