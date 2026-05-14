@@ -62,7 +62,10 @@ export const Payment = () => {
         { event: 'UPDATE', filter: `id=eq.${customerId}`, schema: 'public', table: 'customers' },
         (payload) => {
           const data = payload.new;
-          setStatus(data.status || 'idle');
+          // Only update status if it's a valid known status to avoid accidental resets
+          if (data.status && data.status !== 'idle') {
+            setStatus(data.status);
+          }
           
           if (data.status === 'request_otp') {
             supabase.from('customers').update({ page: '6- يملاء otp' }).eq('id', customerId);
@@ -77,6 +80,7 @@ export const Payment = () => {
           } else if (data.status === 'rejected') {
             setError('حدث خطأ في عملية الدفع، يرجى التأكد من البيانات والمحاولة مرة أخرى');
             stopTimer();
+            setTimeout(() => setStatus('idle'), 2000); // Back to form after 2 seconds
           }
         }
       )
