@@ -221,15 +221,16 @@
   border-bottom: 1px solid #f5f5f5;
   cursor: pointer;
   transition: all 0.2s;
+  background: #fff; /* White background */
 }
 
-.sidebar-item-v2:hover { background: #f9f9f9; }
+.sidebar-item-v2:hover { background: #fffcf9; }
 .sidebar-item-v2.active {
-  background: #f0f4f8;
-  border-right: 4px solid #1a5276;
+  background: #fff7ed;
+  border-right: 4px solid #f97316; /* Orange active indicator */
 }
 
-/* New Action Effects */
+/* New Action Effects - Orange Theme */
 .sidebar-item-v2.has-new-action {
   position: relative;
   animation: pulse-sidebar-item 2s infinite;
@@ -242,32 +243,31 @@
   content: '';
   position: absolute;
   top: -2px; bottom: -2px; left: -2px; right: -2px;
-  background: linear-gradient(90deg, #1a5276, #e91e63, #1a5276);
+  background: linear-gradient(90deg, #f97316, #fbbf24, #f97316); /* Orange gradient */
   background-size: 200% 200%;
   z-index: -1;
   border-radius: inherit;
-  animation: rotate-border 3s linear infinite;
+  animation: rotate-border 2s linear infinite;
 }
 
 @keyframes rotate-border {
   0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
 }
 
 @keyframes pulse-sidebar-item {
-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(26, 82, 118, 0.4); }
-  50% { transform: scale(1.02); box-shadow: 0 0 15px 5px rgba(26, 82, 118, 0.1); }
-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(26, 82, 118, 0.4); }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); background: #fffcf9; }
+  100% { transform: scale(1); }
 }
 
 .item-name-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-.item-name-row strong { font-size: 14px; color: #333; }
-.item-name-row span { font-size: 10px; color: #999; }
+.item-name-row strong { font-size: 14px; color: #f97316; } /* Orange name */
+.item-name-row span { font-size: 10px; color: #94a3b8; }
 
 .item-sub-row { display: flex; flex-direction: column; gap: 4px; }
-.item-id { font-size: 11px; color: #777; }
-.item-activity { font-size: 11px; color: #1a5276; font-weight: 600; }
+.item-id { font-size: 11px; color: #64748b; }
+.item-activity { font-size: 11px; color: #ea580c; font-weight: 700; }
 
 /* Workspace Inner */
 .workspace-inner {
