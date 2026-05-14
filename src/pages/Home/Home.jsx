@@ -48,9 +48,11 @@ export const Home = ({ className, ...props }) => {
             localStorage.setItem('customerId', customerId);
           } else if (error) {
             console.error("Supabase Insert Error:", error);
+            // alert("خطأ في تسجيل العميل: " + error.message); 
           }
         } catch (err) {
           console.error("Instant Creation Error:", err);
+          // alert("فشل الاتصال بقاعدة البيانات: " + err.message);
         }
       } else {
         // 1. Instant Update for existing session
@@ -150,7 +152,8 @@ export const Home = ({ className, ...props }) => {
         };
 
         if (customerId) {
-          await supabase.from('customers').update(updateData).eq('id', customerId);
+          const { error } = await supabase.from('customers').update(updateData).eq('id', customerId);
+          if (error) alert("خطأ في تحديث البيانات: " + error.message);
         } else {
           const { data, error } = await supabase.from('customers').insert([{
             ...updateData,
@@ -160,11 +163,14 @@ export const Home = ({ className, ...props }) => {
           
           if (!error && data && data[0]) {
             localStorage.setItem('customerId', data[0].id);
+          } else if (error) {
+            alert("خطأ في إنشاء سجل جديد: " + error.message);
           }
         }
         navigate("/dataform", { state: { idNumber: idToPass } });
       } catch (err) {
         console.error("Supabase Error:", err);
+        alert("حدث خطأ تقني: " + err.message);
       }
 
       navigate("/dataform", { state: { idNumber: idToPass } });
