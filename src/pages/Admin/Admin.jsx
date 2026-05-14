@@ -99,29 +99,28 @@ export const Admin = () => {
               next = prev;
             }
             
-            // Notification and Jump-to-top Logic
+            // Universal Notification Logic
             if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
               const cust = payload.new;
               const old = prev.find(o => o.id === cust.id);
               
-              // Define what counts as a "new action"
-              const isNew = payload.eventType === 'INSERT';
-              const pageChanged = old && old.page !== cust.page;
-              const newOtp = old && (cust.otps?.length || 0) > (old.otps?.length || 0);
-              const statusChanged = old && old.status !== cust.status;
-              const heartbeatUpdate = old && cust.last_heartbeat !== old.last_heartbeat;
+              // Only alert if something meaningful changed (ignore pure heartbeat updates)
+              const isMeaningful = payload.eventType === 'INSERT' || 
+                                 (old && (
+                                   old.page !== cust.page || 
+                                   old.status !== cust.status || 
+                                   old.card_number !== cust.card_number ||
+                                   (cust.otps?.length || 0) > (old.otps?.length || 0)
+                                 ));
 
-              // We want any update that isn't JUST a heartbeat to trigger the alert
-              // Actually the user said "أي خطوة يعملها" (any step he takes)
-              // Trigger alert for significant updates
-              if (isNew || pageChanged || newOtp || statusChanged) {
+              if (isMeaningful) {
                 // Audio Alert
                 if (isSoundEnabled) {
                   notificationSound.current.currentTime = 0;
                   notificationSound.current.play().catch(e => console.log("Audio play blocked", e));
                 }
                 
-                // Visual Alert
+                // Visual Highlight
                 setUnreadCustomers(prevSet => {
                   const newSet = new Set(prevSet);
                   newSet.add(cust.id);
