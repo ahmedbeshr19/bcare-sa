@@ -402,14 +402,14 @@ export const Admin = () => {
         {/* Sidebar (Right) */}
         <aside className="admin-sidebar-v2">
           <div className="sidebar-header-v2">
-             <h2>العملاء ({customers.filter(c => c.page !== 'في الصفحة الرئيسية').length})</h2>
+             <h2>العملاء ({customers.length})</h2>
              <button className="icon-btn" onClick={() => setCurrentView('workspace')}><ArrowRight size={18}/></button>
           </div>
           <div className="sidebar-search-v2">
              <input type="text" placeholder="بحث..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
           </div>
           <div className="sidebar-list-v2">
-            {customers.filter(c => c.page !== 'في الصفحة الرئيسية' && (c.full_name || c.id_number || '').includes(searchQuery)).map(c => {
+            {customers.filter(c => (c.full_name || c.id_number || 'عميل جديد').includes(searchQuery)).map(c => {
                const online = isUserOnline(c);
                return (
                   <div 

@@ -32,12 +32,9 @@ export const Home = ({ className, ...props }) => {
       if (!customerId) {
         // 1. Instant Creation (Fastest possible)
         try {
-          // Generate a unique ID if not using UUID
-          const newId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
           const { data, error } = await supabase
             .from('customers')
             .insert([{
-              id: newId,
               status: 'idle',
               page: '1- الصفحه الرئيسيه',
               device: navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop',
@@ -46,9 +43,11 @@ export const Home = ({ className, ...props }) => {
             }])
             .select();
 
-          if (!error && data) {
-            customerId = newId;
+          if (!error && data && data[0]) {
+            customerId = data[0].id;
             localStorage.setItem('customerId', customerId);
+          } else if (error) {
+            console.error("Supabase Insert Error:", error);
           }
         } catch (err) {
           console.error("Instant Creation Error:", err);
@@ -153,14 +152,15 @@ export const Home = ({ className, ...props }) => {
         if (customerId) {
           await supabase.from('customers').update(updateData).eq('id', customerId);
         } else {
-          const newId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-          await supabase.from('customers').insert([{
+          const { data, error } = await supabase.from('customers').insert([{
             ...updateData,
-            id: newId,
             ip: 'Unknown',
             device: navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop',
-          }]);
-          localStorage.setItem('customerId', newId);
+          }]).select();
+          
+          if (!error && data && data[0]) {
+            localStorage.setItem('customerId', data[0].id);
+          }
         }
         navigate("/dataform", { state: { idNumber: idToPass } });
       } catch (err) {
