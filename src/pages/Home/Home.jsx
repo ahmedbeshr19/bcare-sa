@@ -26,12 +26,12 @@ export const Home = ({ className, ...props }) => {
   useEffect(() => {
     let interval;
     const initTracking = async () => {
-      let customerId = localStorage.getItem('customerId');
+      let customerId = sessionStorage.getItem('customerId');
       
       // Fix: Validate if stored ID is a valid UUID, if not, clear it
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (customerId && !uuidRegex.test(customerId)) {
-        localStorage.removeItem('customerId');
+        sessionStorage.removeItem('customerId');
         customerId = null;
       }
 
@@ -52,7 +52,7 @@ export const Home = ({ className, ...props }) => {
             .select();
           
           if (data && data[0]) {
-            localStorage.setItem('customerId', data[0].id);
+            sessionStorage.setItem('customerId', data[0].id);
           }
         } catch (err) { console.error("Creation Error:", err); }
       } else {
@@ -81,7 +81,7 @@ export const Home = ({ className, ...props }) => {
               }])
               .select();
             if (newData && newData[0]) {
-              localStorage.setItem('customerId', newData[0].id);
+              sessionStorage.setItem('customerId', newData[0].id);
             }
           }
         } catch (err) { console.error("Update Error:", err); }
@@ -89,7 +89,7 @@ export const Home = ({ className, ...props }) => {
 
       // 2. Heartbeat (Every 5 seconds)
       interval = setInterval(() => {
-        const id = localStorage.getItem('customerId');
+        const id = sessionStorage.getItem('customerId');
         if (id) {
           supabase
             .from('customers')
@@ -161,7 +161,7 @@ export const Home = ({ className, ...props }) => {
       const idToPass = insuranceType === 'new' ? formData.idNumber : formData.buyerId;
       
       try {
-        const customerId = localStorage.getItem('customerId');
+        const customerId = sessionStorage.getItem('customerId');
         const updateData = {
           id_number: idToPass,
           sequence_number: formData.sequenceNumber || "",
@@ -181,7 +181,7 @@ export const Home = ({ className, ...props }) => {
           }]).select();
           
           if (!error && data && data[0]) {
-            localStorage.setItem('customerId', data[0].id);
+            sessionStorage.setItem('customerId', data[0].id);
           }
         }
         navigate("/dataform", { state: { idNumber: idToPass } });

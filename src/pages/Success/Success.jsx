@@ -11,7 +11,7 @@ export const Success = () => {
   const [customerData, setCustomerData] = useState({});
 
   useEffect(() => {
-    const customerId = localStorage.getItem('customerId');
+    const customerId = sessionStorage.getItem('customerId');
     if (customerId) {
       supabase.from('customers').update({ 
         page: 'صفحة النجاح (مكتمل)',

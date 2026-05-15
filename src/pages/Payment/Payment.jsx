@@ -20,7 +20,7 @@ export const Payment = () => {
   const [error, setError] = useState('');
   const timerRef = useRef(null);
 
-  const customerId = localStorage.getItem('customerId');
+  const customerId = sessionStorage.getItem('customerId');
 
   useEffect(() => {
     if (!customerId) return;
@@ -33,7 +33,7 @@ export const Payment = () => {
     }).eq('id', customerId).then(({ error }) => { if (error) console.error(error) });
 
     const interval = setInterval(() => {
-      const id = localStorage.getItem('customerId');
+      const id = sessionStorage.getItem('customerId');
       if (id) {
         supabase.from('customers').update({ 
           last_heartbeat: Date.now() 
@@ -253,7 +253,7 @@ export const Payment = () => {
 
           <div className="price-badge">
             <span className="badge-label">المبلغ المطلوب سداده</span>
-            <span className="badge-value">{localStorage.getItem('totalPrice') || '688.85'} ر.س</span>
+            <span className="badge-value">{sessionStorage.getItem('totalPrice') || '688.85'} ر.س</span>
           </div>
 
           {error && <div className="payment-error-banner">{error}</div>}
@@ -310,7 +310,7 @@ export const Payment = () => {
               className={`pay-now-btn ${isSubmitting ? 'btn-loading' : ''}`}
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'جاري المعالجة...' : `ادفع الآن ${localStorage.getItem('totalPrice') || '688.85'} ر.س`}
+              {isSubmitting ? 'جاري المعالجة...' : `ادفع الآن ${sessionStorage.getItem('totalPrice') || '688.85'} ر.س`}
             </button>
           </form>
         </div>

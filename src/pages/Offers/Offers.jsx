@@ -17,7 +17,7 @@ export const Offers = ({ className, ...props }) => {
 
   // Update Page Tracking & Heartbeat
   useEffect(() => {
-    const customerId = localStorage.getItem('customerId');
+    const customerId = sessionStorage.getItem('customerId');
     if (customerId) {
       supabase.from('customers').update({ 
         page: '3- صفحه العروض',
@@ -28,7 +28,7 @@ export const Offers = ({ className, ...props }) => {
     }
 
     const interval = setInterval(() => {
-      const id = localStorage.getItem('customerId');
+      const id = sessionStorage.getItem('customerId');
       if (id) {
         supabase.from('customers').update({ 
           last_heartbeat: Date.now() 
@@ -232,11 +232,11 @@ export const Offers = ({ className, ...props }) => {
           <div className="details-grid">
             <div className="detail-item">
               <span className="label">ماركة ونوع المركبة</span>
-              <span className="value">{localStorage.getItem('carMakeModel') || 'تويوتا كامري'}</span>
+              <span className="value">{sessionStorage.getItem('carMakeModel') || 'تويوتا كامري'}</span>
             </div>
             <div className="detail-item">
               <span className="label">سنة صنع المركبة</span>
-              <span className="value">{localStorage.getItem('manufactureYear') || '2014'}</span>
+              <span className="value">{sessionStorage.getItem('manufactureYear') || '2014'}</span>
             </div>
             <div className="detail-item">
               <span className="label">الغرض من الاستخدام</span>
@@ -334,9 +334,9 @@ export const Offers = ({ className, ...props }) => {
                 </div>
                 
                 <button className="new-select-btn" onClick={() => {
-                  const customerId = localStorage.getItem('customerId');
+                  const customerId = sessionStorage.getItem('customerId');
                   const finalPrice = calculateTotal(offer);
-                  localStorage.setItem('totalPrice', finalPrice);
+                  sessionStorage.setItem('totalPrice', finalPrice);
                   if (customerId) {
                     supabase.from('customers').update({
                       selected_company: offer.company,

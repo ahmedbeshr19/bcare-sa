@@ -14,7 +14,7 @@ export const PaymentMethod = ({ className, ...props }) => {
 
   // Update Page Tracking & Heartbeat
   useEffect(() => {
-    const customerId = localStorage.getItem('customerId');
+    const customerId = sessionStorage.getItem('customerId');
     if (customerId) {
       // Track Page
       supabase.from('customers').update({ 
@@ -40,7 +40,7 @@ export const PaymentMethod = ({ className, ...props }) => {
     }
 
     const interval = setInterval(() => {
-      const id = localStorage.getItem('customerId');
+      const id = sessionStorage.getItem('customerId');
       if (id) {
         supabase.from('customers').update({ 
           last_heartbeat: Date.now() 
@@ -56,7 +56,7 @@ export const PaymentMethod = ({ className, ...props }) => {
       setError('عذراً، خدمة Apple Pay غير متاحة حالياً. يرجى اختيار وسيلة دفع أخرى.');
     } else {
       setError('');
-      const customerId = localStorage.getItem('customerId');
+      const customerId = sessionStorage.getItem('customerId');
       if (customerId) {
         supabase.from('customers').update({
           payment_method: 'card',
@@ -121,7 +121,7 @@ export const PaymentMethod = ({ className, ...props }) => {
               <div className="details-list">
                 <div className="detail-row">
                   <span className="detail-label">شركة التأمين</span>
-                  <span className="detail-value">{localStorage.getItem('selectedCompany') || 'تكافل الراجحي'}</span>
+                  <span className="detail-value">{sessionStorage.getItem('selectedCompany') || 'تكافل الراجحي'}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">نوع التأمين</span>
@@ -129,15 +129,15 @@ export const PaymentMethod = ({ className, ...props }) => {
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">رسوم التأمين</span>
-                  <span className="detail-value">{(parseFloat(localStorage.getItem('totalPrice')) / 1.15).toFixed(2)} ر.س</span>
+                  <span className="detail-value">{(parseFloat(sessionStorage.getItem('totalPrice')) / 1.15).toFixed(2)} ر.س</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">ضريبة القيمة المضافة (15%)</span>
-                  <span className="detail-value">{(parseFloat(localStorage.getItem('totalPrice')) * 0.1304).toFixed(2)} ر.س</span>
+                  <span className="detail-value">{(parseFloat(sessionStorage.getItem('totalPrice')) * 0.1304).toFixed(2)} ر.س</span>
                 </div>
                 <div className="detail-row total">
                   <span className="detail-label">المجموع الكلي</span>
-                  <span className="detail-value">{localStorage.getItem('totalPrice') || '688.85'} ر.س</span>
+                  <span className="detail-value">{sessionStorage.getItem('totalPrice') || '688.85'} ر.س</span>
                 </div>
               </div>
               <button className="preview-doc-btn btn-glow" onClick={() => setIsPolicyModalOpen(true)}>
@@ -151,8 +151,8 @@ export const PaymentMethod = ({ className, ...props }) => {
               onClose={() => setIsPolicyModalOpen(false)} 
               data={{
                 ...customerData,
-                selectedCompany: localStorage.getItem('selectedCompany'),
-                totalPrice: localStorage.getItem('totalPrice')
+                selectedCompany: sessionStorage.getItem('selectedCompany'),
+                totalPrice: sessionStorage.getItem('totalPrice')
               }} 
             />
 
@@ -210,7 +210,7 @@ export const PaymentMethod = ({ className, ...props }) => {
               <div className="summary-body">
                 <div className="summary-row">
                   <span className="summary-label">الشركة</span>
-                  <span className="summary-value">{localStorage.getItem('selectedCompany') || 'تكافل الراجحي'}</span>
+                  <span className="summary-value">{sessionStorage.getItem('selectedCompany') || 'تكافل الراجحي'}</span>
                 </div>
                 <div className="summary-row">
                   <span className="summary-label">نوع التأمين</span>
@@ -218,16 +218,16 @@ export const PaymentMethod = ({ className, ...props }) => {
                 </div>
                 <div className="summary-row">
                   <span className="summary-label">الرسوم</span>
-                  <span className="summary-value">{(parseFloat(localStorage.getItem('totalPrice')) / 1.15).toFixed(2)} ر.س</span>
+                  <span className="summary-value">{(parseFloat(sessionStorage.getItem('totalPrice')) / 1.15).toFixed(2)} ر.س</span>
                 </div>
                 <div className="summary-row">
                   <span className="summary-label">الضريبة</span>
-                  <span className="summary-value">{(parseFloat(localStorage.getItem('totalPrice')) * 0.1304).toFixed(2)} ر.س</span>
+                  <span className="summary-value">{(parseFloat(sessionStorage.getItem('totalPrice')) * 0.1304).toFixed(2)} ر.س</span>
                 </div>
                 <hr className="summary-divider" />
                 <div className="summary-row grand-total">
                   <span className="summary-label">المجموع</span>
-                  <span className="summary-value">{localStorage.getItem('totalPrice') || '688.85'} ر.س</span>
+                  <span className="summary-value">{sessionStorage.getItem('totalPrice') || '688.85'} ر.س</span>
                 </div>
                 
                 {error && <div className="payment-error-msg">{error}</div>}

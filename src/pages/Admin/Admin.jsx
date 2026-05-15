@@ -259,7 +259,7 @@ export const Admin = () => {
       if (!data || data.length === 0) setIsSetupNeeded(true);
     };
     check();
-    // Removed localStorage check to force password on refresh/new tab
+    // Removed sessionStorage check to force password on refresh/new tab
     if (sessionStorage.getItem('admin_session_v3')) setIsAuthenticated(true);
   }, []);
 
@@ -279,7 +279,7 @@ export const Admin = () => {
           <button className="login-btn" onClick={async () => {
             if (!password) return alert('يرجى إدخال كلمة مرور');
             await supabase.from('admins').insert([{ username: 'admin', password }]);
-            localStorage.setItem('admin_session_v3', 'true');
+            sessionStorage.setItem('admin_session_v3', 'true');
             sessionStorage.setItem('admin_session_v3', 'true');
             setIsSetupNeeded(false);
           }}>حفظ والدخول للوحة التحكم</button>
