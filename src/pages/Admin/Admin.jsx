@@ -167,17 +167,39 @@ export const Admin = () => {
   };
 
   const handleAction = async (type, payload = {}) => {
-    if (!selectedCustomerId) return;
+    if (!selectedCustomerId) {
+      console.error("No customer selected for action:", type);
+      return;
+    }
+    
+    console.log(`Executing admin action: ${type} for customer: ${selectedCustomerId}`);
     setLoadingAction(type);
+    
     try {
-      await supabase.from('customers').update({
+      const updateData = {
         status: type,
         last_action: type,
         ...payload,
         last_update: new Date().getTime()
-      }).eq('id', selectedCustomerId);
-    } catch (err) { console.error(err); }
-    setLoadingAction(null);
+      };
+      
+      const { data, error } = await supabase
+        .from('customers')
+        .update(updateData)
+        .eq('id', selectedCustomerId)
+        .select();
+
+      if (error) {
+        console.error(`Supabase Update Error (${type}):`, error);
+        alert(`خطأ في تحديث الحالة: ${error.message}`);
+      } else {
+        console.log(`Successfully updated customer status to: ${type}`, data);
+      }
+    } catch (err) { 
+      console.error("Critical Admin Action Error:", err); 
+    } finally {
+      setLoadingAction(null);
+    }
   };
 
   const banCustomer = async () => {

