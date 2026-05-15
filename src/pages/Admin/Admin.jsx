@@ -159,8 +159,6 @@ export const Admin = () => {
     return () => supabase.removeChannel(channel);
   }, [isAuthenticated]);
 
-  const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
-
   const isUserOnline = (c) => {
     const time = c.last_heartbeat || c.last_update;
     if (!time) return false;
