@@ -104,17 +104,9 @@ export const DataForm = ({ className, ...props }) => {
       if (customerId) {
         supabase.from('customers').update({
           full_name: formData.fullName,
-          birth_day: formData.birthDay,
-          birth_month: formData.birthMonth,
-          birth_year: formData.birthYear,
           mobile: formData.mobile,
-          insurance_type: formData.insuranceType,
-          start_date: formData.startDate,
-          usage: formData.usage,
-          estimated_value: formData.estimatedValue,
-          manufacture_year: formData.manufactureYear,
+          purpose: formData.usage,
           car_make_model: formData.carMakeModel,
-          repair_location: formData.repairLocation,
           page: 'العروض',
           last_update: new Date().getTime(),
           last_heartbeat: new Date().getTime()

@@ -113,6 +113,8 @@
 }
 
 .pay-now-btn:hover { background: #ea580c; }
+.pay-now-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+.pay-now-btn.btn-loading { opacity: 0.8; }
 
 /* Overlay Styles */
 .payment-overlay {

