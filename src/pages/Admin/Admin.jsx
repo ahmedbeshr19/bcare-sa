@@ -178,7 +178,6 @@ export const Admin = () => {
     try {
       const updateData = {
         status: type,
-        last_action: type,
         ...payload,
         last_update: new Date().getTime()
       };
