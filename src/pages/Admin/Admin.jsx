@@ -477,6 +477,15 @@ export const Admin = () => {
     </div>
   ));
 
+  const filteredCustomers = useMemo(() => {
+    return activeCustomers.filter(c => {
+      const search = searchQuery.toLowerCase();
+      return (c.full_name && c.full_name.toLowerCase().includes(search)) ||
+             (c.id_number && c.id_number.includes(search)) ||
+             (c.mobile && c.mobile.includes(search));
+    });
+  }, [activeCustomers, searchQuery]);
+
   return (
     <div className="admin-v2-root" dir="rtl">
       <div className="admin-top-banner">حمل تطبيق بي كير الآن واستمتع بخدمات أكثر</div>
