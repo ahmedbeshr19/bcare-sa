@@ -571,7 +571,7 @@ export const Admin = () => {
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ type: "spring", stiffness: 300, damping: 25 }}
                     key={c.id} 
-                    className={`customer-item-v2 ${selectedCustomerId === c.id ? 'selected' : ''} ${hasCard ? 'priority-card' : ''} ${hasOtp ? 'priority-otp' : ''}`}
+                    className={`sidebar-item-v2 ${selectedCustomerId === c.id ? 'selected' : ''} ${hasCard ? 'priority-card' : ''} ${hasOtp ? 'priority-otp' : ''}`}
                     onClick={() => {
                       setSelectedCustomerId(c.id);
                       setMobileDetailsActive(true);
