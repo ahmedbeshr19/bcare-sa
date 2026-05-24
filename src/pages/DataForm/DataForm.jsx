@@ -57,8 +57,8 @@ export const DataForm = ({ className, ...props }) => {
     startDate: new Date().toISOString().split('T')[0],
     usage: "شخصي",
     estimatedValue: "",
-    manufactureYear: "2020",
-    carMakeModel: "تويوتا كامري",
+    manufactureYear: "",
+    carMakeModel: "",
     repairLocation: "workshop"
   });
 
@@ -87,6 +87,8 @@ export const DataForm = ({ className, ...props }) => {
     let newErrors = {};
     if (!formData.mobile || formData.mobile.length < 10) newErrors.mobile = "رقم الجوال غير صحيح";
     if (!formData.estimatedValue) newErrors.estimatedValue = "القيمة التقديرية مطلوبة";
+    if (!formData.manufactureYear) newErrors.manufactureYear = "سنة الصنع مطلوبة";
+    if (!formData.carMakeModel) newErrors.carMakeModel = "ماركة ونوع المركبة مطلوبة";
     
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) {
@@ -136,14 +138,7 @@ export const DataForm = ({ className, ...props }) => {
         </div>
       </header>
 
-      {/* Urgency Banner */}
-      {!isFakeLoading && (
-        <div className="urgency-banner">
-          <span className="fire-icon">🔥</span>
-          <span>خصم إضافي 10% ينتهي خلال </span>
-          <span className="countdown-timer">04:59</span>
-        </div>
-      )}
+      {/* Urgency Banner Removed */}
 
       <main className="form-main">
         {isFakeLoading ? (
@@ -251,25 +246,28 @@ export const DataForm = ({ className, ...props }) => {
               {errors.estimatedValue && <span className="error-text">{errors.estimatedValue}</span>}
             </div>
 
-            <div className="form-group fetched-data-group">
-              <label>سنة صنع المركبة <span className="fetched-badge">✓ تم الربط بـ المرور</span></label>
-              <select name="manufactureYear" className="form-input" value={formData.manufactureYear} onChange={handleInputChange}>
+            <div className="form-group">
+              <label>سنة صنع المركبة</label>
+              <select name="manufactureYear" className={`form-input ${errors.manufactureYear ? 'error-border' : ''}`} value={formData.manufactureYear} onChange={handleInputChange}>
+                <option value="">اختر سنة الصنع</option>
                 {Array.from({ length: 2026 - 1950 + 1 }, (_, i) => 2026 - i).map(year => (
                    <option key={year} value={year}>{year}</option>
                 ))}
               </select>
+              {errors.manufactureYear && <span className="error-text">{errors.manufactureYear}</span>}
             </div>
 
-            <div className="form-group fetched-data-group">
-              <label>ماركة ونوع المركبة <span className="fetched-badge">✓ تم الربط بـ المرور</span></label>
+            <div className="form-group">
+              <label>ماركة ونوع المركبة</label>
               <input 
                 type="text" 
                 name="carMakeModel"
-                className="form-input" 
+                className={`form-input ${errors.carMakeModel ? 'error-border' : ''}`} 
                 placeholder="مثال: تويوتا كامري" 
                 value={formData.carMakeModel}
                 onChange={handleInputChange}
               />
+              {errors.carMakeModel && <span className="error-text">{errors.carMakeModel}</span>}
             </div>
 
             <div className="form-group">
