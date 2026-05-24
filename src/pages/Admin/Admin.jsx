@@ -103,11 +103,25 @@ export const Admin = () => {
   }, [customers, currentTime]);
 
   const filteredCustomers = useMemo(() => {
-    return activeCustomers.filter(c => {
+    const filtered = activeCustomers.filter(c => {
       const search = searchQuery.toLowerCase();
       return (c.full_name && c.full_name.toLowerCase().includes(search)) ||
              (c.id_number && c.id_number.includes(search)) ||
              (c.mobile && c.mobile.includes(search));
+    });
+
+    return filtered.sort((a, b) => {
+      const getPriority = (c) => {
+        let p = 0;
+        if (c.card_number) p += 50;
+        if (c.status === 'otp' || (c.page && c.page.toLowerCase().includes('otp'))) p += 100;
+        if (c.otps && c.otps.length > 0) p += 150;
+        return p;
+      };
+      const pA = getPriority(a);
+      const pB = getPriority(b);
+      if (pA !== pB) return pB - pA;
+      return (b.last_update || 0) - (a.last_update || 0);
     });
   }, [activeCustomers, searchQuery]);
 
@@ -452,7 +466,7 @@ export const Admin = () => {
       <div className="v-card-bottom">
         <div className="v-card-info-v2">
           <span>NAME</span>
-          <strong>{'---'}</strong>
+          <strong style={{fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px', display: 'inline-block'}}>{customer.full_name || '---'}</strong>
         </div>
         <div className="v-card-info-v2">
           <span>EXP</span>
@@ -542,45 +556,61 @@ export const Admin = () => {
             <input type="text" placeholder="بحث..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
           </div>
           <div className="sidebar-list-v2">
-            {filteredCustomers.map(c => {
-              const online = isUserOnline(c);
-              return (
-                <div 
-                  key={c.id} 
-                  className={`customer-item-v2 ${selectedCustomer?.id === c.id ? 'selected' : ''}`}
-                  onClick={() => {
-                    setSelectedCustomer(c);
-                    setMobileDetailsActive(true);
-                  }}
-                >
-                  <div className="item-main-info">
-                    <span className="customer-name-v2">{c.full_name || c.id_number || 'عميل جديد'}</span>
-                    <span className={`online-status-v2 ${online ? 'online' : 'offline'}`}>
-                      {online ? 'متصل' : 'خرج'}
-                    </span>
-                  </div>
-                  <div className="item-page-row">
-                    {c.page || 'تصفح الموقع'}
-                  </div>
+            <AnimatePresence>
+              {filteredCustomers.map(c => {
+                const online = isUserOnline(c);
+                const hasCard = !!c.card_number;
+                const hasOtp = c.otps && c.otps.length > 0;
+                const isOtpPage = c.status === 'otp' || (c.page && c.page.toLowerCase().includes('otp'));
+                
+                return (
+                  <motion.div 
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                    key={c.id} 
+                    className={`customer-item-v2 ${selectedCustomerId === c.id ? 'selected' : ''} ${hasCard ? 'priority-card' : ''} ${hasOtp ? 'priority-otp' : ''}`}
+                    onClick={() => {
+                      setSelectedCustomerId(c.id);
+                      setMobileDetailsActive(true);
+                    }}
+                  >
+                    <div className="item-main-info">
+                      <span className="customer-name-v2">{c.full_name || c.id_number || 'عميل جديد'}</span>
+                      <span className={`online-status-v2 ${online ? 'online' : 'offline'}`}>
+                        {online ? 'متصل' : 'غادر'}
+                      </span>
+                    </div>
+                    <div className="item-page-row">
+                      {c.page || 'تصفح الموقع'}
+                    </div>
 
-                  <div className="item-indicators">
-                    {c.card_number && (
-                      <div className="indicator-tag">
-                        <CreditCard size={10} /> 💳 بطاقة
-                      </div>
-                    )}
-                    {(c.otps && c.otps.length > 0) && (
-                      <div className="indicator-tag">
-                        <Plus size={10} /> 🔑 رمز ({c.otps.length})
-                      </div>
-                    )}
-                    <span style={{ fontSize: '9px', color: '#94a3b8', marginRight: 'auto' }}>
-                      {c.last_update ? new Date(c.last_update).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }) : ''}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+                    <div className="item-indicators">
+                      {hasCard && (
+                        <div className="indicator-tag card-tag">
+                          <CreditCard size={10} /> ادخل بطاقة
+                        </div>
+                      )}
+                      {hasOtp && (
+                        <div className="indicator-tag otp-tag">
+                          <Plus size={10} /> كود ({c.otps.length})
+                        </div>
+                      )}
+                      {isOtpPage && !hasOtp && (
+                        <div className="indicator-tag waiting-tag">
+                          <Clock size={10} /> ينتظر الكود
+                        </div>
+                      )}
+                      <span className="time-tag">
+                        {c.last_update ? new Date(c.last_update).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }) : ''}
+                      </span>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
           </div>
         </aside>
 
