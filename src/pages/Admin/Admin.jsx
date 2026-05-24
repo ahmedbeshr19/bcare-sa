@@ -533,7 +533,15 @@ export const Admin = () => {
             <input type="text" placeholder="بحث..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
           </div>
           <div className="sidebar-list-v2">
-                    });
+            {filteredCustomers.map(c => {
+              const online = isUserOnline(c);
+              return (
+                <div 
+                  key={c.id} 
+                  className={`customer-item-v2 ${selectedCustomer?.id === c.id ? 'selected' : ''}`}
+                  onClick={() => {
+                    setSelectedCustomer(c);
+                    setMobileDetailsActive(true);
                   }}
                 >
                   <div className="item-main-info">
