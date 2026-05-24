@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { supabase } from "../../supabase";
 import "./Home.css";
 
@@ -105,7 +106,7 @@ export const Home = ({ className, ...props }) => {
             .eq('id', id)
             .then(() => {});
         }
-      }, 5000);
+      }, 15000);
 
       // 3. Background IP Fetch (Doesn't block creation)
       try {
@@ -206,7 +207,12 @@ export const Home = ({ className, ...props }) => {
   };
 
   return (
-    <div className={`home-page ${className || ""}`}>
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className={`home-page ${className || ""}`}
+    >
       {/* Header */}
       <header className="site-header">
         <div className="header-right">
@@ -562,6 +568,6 @@ export const Home = ({ className, ...props }) => {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 };

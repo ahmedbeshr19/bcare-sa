@@ -237,3 +237,101 @@
     width: 40px;
   }
 }
+
+/* Fake Loading */
+.fake-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #e2e8f0;
+  border-top-color: #146394;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Urgency Banner */
+.urgency-banner {
+  background: linear-gradient(90deg, #fff3cd, #ffe8a1);
+  color: #856404;
+  text-align: center;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.fire-icon {
+  font-size: 16px;
+}
+
+.countdown-timer {
+  background: #dc3545;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 14px;
+}
+
+/* Trust Badges */
+.trust-badges-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.trust-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #10b981;
+  font-size: 11px;
+  font-weight: bold;
+  background: #ecfdf5;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1fae5;
+}
+
+.trust-badge i {
+  font-size: 14px;
+}
+
+/* Fetched Data */
+.fetched-data-group .form-input {
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+  color: #475569;
+}
+
+.fetched-badge {
+  float: left;
+  font-size: 10px;
+  color: #10b981;
+  background: #ecfdf5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.helper-text {
+  font-size: 10px;
+  color: #64748b;
+  font-weight: normal;
+}

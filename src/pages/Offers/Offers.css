@@ -433,3 +433,62 @@
     display: none;
   }
 }
+
+/* Skeleton Loader */
+.skeleton-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.skeleton-box {
+  background: #e2e8f0;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-box::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -100%; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  100% { left: 100%; }
+}
+
+/* Urgency Banner */
+.urgency-banner {
+  background: linear-gradient(90deg, #fff3cd, #ffe8a1);
+  color: #856404;
+  text-align: center;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.fire-icon {
+  font-size: 16px;
+}
+
+.countdown-timer {
+  background: #dc3545;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 14px;
+}

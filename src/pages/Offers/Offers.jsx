@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
 import "./Offers.css";
 import Footer from "../../components/Footer/Footer";
 import { supabase } from "../../supabase";
@@ -8,6 +9,15 @@ export const Offers = ({ className, ...props }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("third-party");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate real fetching
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (location.state?.insuranceType) {
@@ -39,126 +49,149 @@ export const Offers = ({ className, ...props }) => {
     return () => clearInterval(interval);
   }, []);
 
-  // Base data for offers
-  const initialOffers = {
-    "third-party": [
-      { id: 1, company: "ولاء للتأمين", logo: "/walaa.png", basePrice: 652.17, type: "التأمين ضد الغير", 
+  const generateDynamicOffers = () => {
+    const idNumber = sessionStorage.getItem('customerIdNumber') || '1000000000';
+    // Get car value from session, default to 50000 if not found
+    const carValueStr = sessionStorage.getItem('carValue');
+    const carValue = carValueStr ? parseInt(carValueStr.replace(/\D/g, ''), 10) : 50000;
+
+    // Driver Risk Profile (Hash function based on ID)
+    let hash = 0;
+    for (let i = 0; i < idNumber.length; i++) {
+      hash = idNumber.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    // Normalize hash to a multiplier between 0.85 and 1.25
+    const riskFactor = 0.85 + (Math.abs(hash) % 40) / 100;
+
+    // Base Third-Party Price
+    const baseThirdParty = 750;
+
+    // The static definitions with rates
+    const thirdPartyBase = [
+      { id: 1, company: "ولاء للتأمين", logo: "/walaa.png", rate: 1.1, type: "التأمين ضد الغير", 
         features: [{ name: "المسؤولية المدنية تجاه الغير بحد أقصى 10,000,000 ريال", price: 0, checked: true }],
         addons: [
           { id: 'rsa', name: "المساعدة على الطريق", price: 50, checked: false },
           { id: 'pa', name: "الحوادث الشخصية للسائق", price: 20, checked: false }
-        ],
-        fees: { discount: 52.15, vat: 70.4 }
+        ]
       },
-      { id: 2, company: "تكافل الراجحي", logo: "/شعار تكافل الراجحي - SVG.svg", basePrice: 506.00, type: "التأمين ضد الغير", 
+      { id: 2, company: "تكافل الراجحي", logo: "/شعار تكافل الراجحي - SVG.svg", rate: 1.0, type: "التأمين ضد الغير", 
         features: [{ name: "المسؤولية المدنية تجاه الغير بحد أقصى 10,000,000 ريال", price: 0, checked: true }],
         addons: [
-          { id: 'pa', name: "تغطية الحوادث الشخصية للسائق والركاب", price: 50, checked: false },
+          { id: 'pa', name: "تغطية الحوادث الشخصية", price: 50, checked: false },
           { id: 'rsa', name: "المساعدة على الطريق", price: 30, checked: false },
-          { id: 'glass', name: "تغطية ضد كسر الزجاج والحرائق والسرقة", price: 150, checked: false },
-          { id: 'natural', name: "تغطية الكوارث الطبيعية", price: 100, checked: false }
-        ],
-        fees: { discount: 52.15, vat: 70.4 }
+          { id: 'glass', name: "تغطية ضد كسر الزجاج والحرائق", price: 150, checked: false }
+        ]
       },
-      { id: 3, company: "التعاونية", logo: "/group1.svg", basePrice: 534.75, type: "التأمين ضد الغير", 
+      { id: 3, company: "التعاونية", logo: "/group1.svg", rate: 1.2, type: "التأمين ضد الغير", 
         features: [{ name: "المسؤولية المدنية تجاه الغير بحد أقصى 10,000,000 ريال", price: 0, checked: true }],
-        addons: [{ id: 'rsa', name: "المساعدة على الطريق الشاملة", price: 40, checked: false }],
-        fees: { discount: 45.00, vat: 65.2 }
+        addons: [{ id: 'rsa', name: "المساعدة على الطريق الشاملة", price: 40, checked: false }]
       },
-      { id: 4, company: "ملاذ للتأمين", logo: "/شعار ملاذ للتأمين - SVG.svg", basePrice: 510.00, type: "التأمين ضد الغير", 
+      { id: 4, company: "ملاذ للتأمين", logo: "/شعار ملاذ للتأمين - SVG.svg", rate: 1.05, type: "التأمين ضد الغير", 
         features: [{ name: "المسؤولية المدنية تجاه الغير بحد أقصى 10,000,000 ريال", price: 0, checked: true }],
-        addons: [{ id: 'fire', name: "تغطية الحريق والسرقة", price: 35, checked: false }],
-        fees: { discount: 40.00, vat: 60.1 }
+        addons: [{ id: 'fire', name: "تغطية الحريق والسرقة", price: 35, checked: false }]
+      },
+      { id: 5, company: "شركة أسيج", logo: "/Acig.svg", rate: 0.85, type: "التأمين ضد الغير", 
+        features: [{ name: "المسؤولية المدنية تجاه الغير بحد أقصى 10,000,000 ريال", price: 0, checked: true }],
+        addons: [{ id: 'pa', name: "الحوادث الشخصية", price: 25, checked: false }]
+      },
+      { id: 6, company: "الدرع العربي", logo: "/Arabian Shield Cooperative Insurance - 01.svg", rate: 1.15, type: "التأمين ضد الغير", 
+        features: [{ name: "المسؤولية المدنية تجاه الغير بحد أقصى 10,000,000 ريال", price: 0, checked: true }],
+        addons: [{ id: 'rsa', name: "المساعدة على الطريق", price: 45, checked: false }]
+      },
+      { id: 7, company: "شركة سلامة", logo: "/clip-path-group0.svg", rate: 0.88, type: "التأمين ضد الغير", 
+        features: [{ name: "المسؤولية المدنية تجاه الغير بحد أقصى 10,000,000 ريال", price: 0, checked: true }],
+        addons: [{ id: 'pa', name: "الحوادث الشخصية", price: 20, checked: false }]
+      },
+      { id: 8, company: "اتحاد الخليج", logo: "/logo0.svg", rate: 1.02, type: "التأمين ضد الغير", 
+        features: [{ name: "المسؤولية المدنية تجاه الغير بحد أقصى 10,000,000 ريال", price: 0, checked: true }],
+        addons: [{ id: 'rsa', name: "المساعدة على الطريق", price: 35, checked: false }]
+      },
+      { id: 9, company: "سايكو SAICO", logo: "/group2.svg", rate: 1.12, type: "التأمين ضد الغير", 
+        features: [{ name: "المسؤولية المدنية تجاه الغير بحد أقصى 10,000,000 ريال", price: 0, checked: true }],
+        addons: [{ id: 'pa', name: "الحوادث الشخصية", price: 30, checked: false }]
+      },
+      { id: 10, company: "بروج للتأمين", logo: "/clip-path-group0.svg", rate: 0.95, type: "التأمين ضد الغير", 
+        features: [{ name: "المسؤولية المدنية تجاه الغير بحد أقصى 10,000,000 ريال", price: 0, checked: true }],
+        addons: [{ id: 'rsa', name: "المساعدة على الطريق", price: 40, checked: false }]
       }
-    ],
-    "comprehensive": [
-      { id: 101, company: "تكافل الراجحي", logo: "/شعار تكافل الراجحي - SVG.svg", basePrice: 506.00, type: "التأمين الشامل", 
-        features: [
-            { name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true }, 
-            { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }
-        ],
-        addons: [
-            { id: 'agency', name: "إصلاح الوكالة", price: 400, checked: false }, 
-            { id: 'car_rent', name: "سيارة بديلة", price: 150, checked: false }
-        ],
-        fees: { discount: 150.00, vat: 240.0 }
+    ];
+
+    const compBase = [
+      { id: 101, company: "تكافل الراجحي", logo: "/شعار تكافل الراجحي - SVG.svg", rate: 0.025, type: "التأمين الشامل", 
+        features: [{ name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true }, { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }],
+        addons: [{ id: 'agency', name: "إصلاح الوكالة", price: 400, checked: false }, { id: 'car_rent', name: "سيارة بديلة", price: 150, checked: false }]
       },
-      { id: 102, company: "التعاونية", logo: "/group1.svg", basePrice: 1240.00, type: "التأمين الشامل", 
-        features: [
-            { name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true },
-            { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }
-        ],
-        addons: [{ id: 'rsa', name: "المساعدة على الطريق", price: 50, checked: false }],
-        fees: { discount: 100.00, vat: 180.0 }
+      { id: 102, company: "التعاونية", logo: "/group1.svg", rate: 0.032, type: "التأمين الشامل", 
+        features: [{ name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true }, { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }],
+        addons: [{ id: 'rsa', name: "المساعدة على الطريق", price: 50, checked: false }]
       },
-      { id: 103, company: "ملاذ للتأمين", logo: "/شعار ملاذ للتأمين - SVG.svg", basePrice: 1100.00, type: "التأمين الشامل", 
-        features: [
-            { name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true },
-            { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }
-        ],
-        addons: [{ id: 'fire', name: "تغطية الحريق والسرقة", price: 40, checked: false }],
-        fees: { discount: 80.00, vat: 160.0 }
+      { id: 103, company: "ملاذ للتأمين", logo: "/شعار ملاذ للتأمين - SVG.svg", rate: 0.028, type: "التأمين الشامل", 
+        features: [{ name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true }, { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }],
+        addons: [{ id: 'fire', name: "تغطية الحريق والسرقة", price: 40, checked: false }]
       },
-      { id: 104, company: "ولاء للتأمين", logo: "/walaa.png", basePrice: 1350.00, type: "التأمين الشامل", 
-        features: [
-            { name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true },
-            { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }
-        ],
-        addons: [{ id: 'rsa', name: "المساعدة على الطريق", price: 60, checked: false }],
-        fees: { discount: 120.00, vat: 200.0 }
+      { id: 104, company: "ولاء للتأمين", logo: "/walaa.png", rate: 0.035, type: "التأمين الشامل", 
+        features: [{ name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true }, { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }],
+        addons: [{ id: 'rsa', name: "المساعدة على الطريق", price: 60, checked: false }]
       },
-      { id: 105, company: "شركة أسيج", logo: "/Acig.svg", basePrice: 980.00, type: "التأمين الشامل", 
-        features: [
-            { name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true },
-            { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }
-        ],
-        addons: [{ id: 'pa', name: "الحوادث الشخصية", price: 30, checked: false }],
-        fees: { discount: 70.00, vat: 140.0 }
+      { id: 105, company: "شركة أسيج", logo: "/Acig.svg", rate: 0.022, type: "التأمين الشامل", 
+        features: [{ name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true }, { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }],
+        addons: [{ id: 'pa', name: "الحوادث الشخصية", price: 30, checked: false }]
       },
-      { id: 106, company: "الدرع العربي", logo: "/Arabian Shield Cooperative Insurance - 01.svg", basePrice: 1420.00, type: "التأمين الشامل", 
-        features: [
-            { name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true },
-            { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }
-        ],
-        addons: [{ id: 'rsa', name: "المساعدة على الطريق", price: 55, checked: false }],
-        fees: { discount: 130.00, vat: 210.0 }
+      { id: 106, company: "الدرع العربي", logo: "/Arabian Shield Cooperative Insurance - 01.svg", rate: 0.038, type: "التأمين الشامل", 
+        features: [{ name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true }, { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }],
+        addons: [{ id: 'rsa', name: "المساعدة على الطريق", price: 55, checked: false }]
       },
-      { id: 107, company: "شركة سلامة", logo: "/clip-path-group0.svg", basePrice: 890.00, type: "التأمين الشامل", 
-        features: [
-            { name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true },
-            { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }
-        ],
-        addons: [{ id: 'fire', name: "تغطية الحريق والسرقة", price: 35, checked: false }],
-        fees: { discount: 60.00, vat: 130.0 }
+      { id: 107, company: "شركة سلامة", logo: "/clip-path-group0.svg", rate: 0.021, type: "التأمين الشامل", 
+        features: [{ name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true }, { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }],
+        addons: [{ id: 'fire', name: "تغطية الحريق والسرقة", price: 35, checked: false }]
       },
-      { id: 108, company: "اتحاد الخليج", logo: "/logo0.svg", basePrice: 1150.00, type: "التأمين الشامل", 
-        features: [
-            { name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true },
-            { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }
-        ],
-        addons: [{ id: 'rsa', name: "المساعدة على الطريق", price: 45, checked: false }],
-        fees: { discount: 90.00, vat: 170.0 }
+      { id: 108, company: "اتحاد الخليج", logo: "/logo0.svg", rate: 0.026, type: "التأمين الشامل", 
+        features: [{ name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true }, { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }],
+        addons: [{ id: 'rsa', name: "المساعدة على الطريق", price: 45, checked: false }]
       },
-      { id: 109, company: "سايكو SAICO", logo: "/group2.svg", basePrice: 1280.00, type: "التأمين الشامل", 
-        features: [
-            { name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true },
-            { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }
-        ],
-        addons: [{ id: 'pa', name: "الحوادث الشخصية", price: 40, checked: false }],
-        fees: { discount: 110.00, vat: 190.0 }
+      { id: 109, company: "سايكو SAICO", logo: "/group2.svg", rate: 0.030, type: "التأمين الشامل", 
+        features: [{ name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true }, { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }],
+        addons: [{ id: 'pa', name: "الحوادث الشخصية", price: 40, checked: false }]
       },
-      { id: 110, company: "بروج للتأمين", logo: "/clip-path-group0.svg", basePrice: 1050.00, type: "التأمين الشامل", 
-        features: [
-            { name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true },
-            { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }
-        ],
-        addons: [{ id: 'rsa', name: "المساعدة على الطريق", price: 50, checked: false }],
-        fees: { discount: 85.00, vat: 155.0 }
+      { id: 110, company: "بروج للتأمين", logo: "/clip-path-group0.svg", rate: 0.024, type: "التأمين الشامل", 
+        features: [{ name: "تغطية شاملة للحوادث", price: 0, checked: true, mandatory: true }, { name: "تعويض الخسارة الكلية", price: 0, checked: true, mandatory: true }],
+        addons: [{ id: 'rsa', name: "المساعدة على الطريق", price: 50, checked: false }]
       }
-    ]
+    ];
+
+    const generatePricing = (baseList, isComprehensive) => {
+      return baseList.map(comp => {
+        let rawPrice = isComprehensive ? (carValue * comp.rate * riskFactor) : (baseThirdParty * comp.rate * riskFactor);
+        
+        // Add random variation up to 20 SAR
+        rawPrice += (Math.random() * 20);
+
+        // Apply rounding
+        const basePrice = Math.round(rawPrice * 100) / 100;
+
+        // No-claim discount between 5% and 15%
+        const discountRate = 0.05 + (Math.abs(hash) % 10) / 100;
+        const discount = Math.round((basePrice * discountRate) * 100) / 100;
+
+        // VAT is 15% on (base - discount)
+        const vat = Math.round(((basePrice - discount) * 0.15) * 100) / 100;
+
+        return {
+          ...comp,
+          basePrice,
+          fees: { discount, vat }
+        };
+      });
+    };
+
+    return {
+      "third-party": generatePricing(thirdPartyBase, false),
+      "comprehensive": generatePricing(compBase, true)
+    };
   };
 
-  const [currentOffers, setCurrentOffers] = useState(initialOffers);
+  const [currentOffers, setCurrentOffers] = useState(generateDynamicOffers());
 
   const toggleAddon = (offerId, addonId) => {
     setCurrentOffers(prev => ({
@@ -201,6 +234,13 @@ export const Offers = ({ className, ...props }) => {
           <span className="lang-toggle">EN</span>
         </div>
       </header>
+
+      {/* Urgency Banner */}
+      <div className="urgency-banner">
+        <span className="fire-icon">🔥</span>
+        <span>خصم إضافي 10% ينتهي خلال </span>
+        <span className="countdown-timer">04:30</span>
+      </div>
 
       <main className="offers-main">
         {/* Progress Stepper */}
@@ -276,9 +316,29 @@ export const Offers = ({ className, ...props }) => {
 
         {/* Offers List */}
         <div className="offers-list">
-          {currentOffers[activeTab].map((offer) => (
-            <div key={offer.id} className="new-offer-card">
-              <div className="card-top-row">
+          {isLoading ? (
+            // Skeletons
+            Array(4).fill(0).map((_, i) => (
+              <div key={`skel-${i}`} className="skeleton-card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                  <div className="skeleton-box" style={{ width: '120px', height: '24px' }}></div>
+                  <div className="skeleton-box" style={{ width: '80px', height: '80px', borderRadius: '50%' }}></div>
+                </div>
+                <div className="skeleton-box" style={{ width: '100%', height: '40px', marginBottom: '10px' }}></div>
+                <div className="skeleton-box" style={{ width: '70%', height: '20px', marginBottom: '10px' }}></div>
+                <div className="skeleton-box" style={{ width: '100%', height: '50px', borderRadius: '25px', marginTop: '10px' }}></div>
+              </div>
+            ))
+          ) : (
+            currentOffers[activeTab].map((offer) => (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                key={offer.id} 
+                className="new-offer-card"
+              >
+                <div className="card-top-row">
                 <div className="company-text-info">
                   <h3 className="company-name-title">{offer.company}</h3>
                   <span className="insurance-type-label">{offer.type}</span>
@@ -350,8 +410,9 @@ export const Offers = ({ className, ...props }) => {
                   اختر هذا العرض
                 </button>
               </div>
-            </div>
-          ))}
+              </motion.div>
+            ))
+          )}
         </div>
       </main>
 

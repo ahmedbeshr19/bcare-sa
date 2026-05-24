@@ -137,6 +137,24 @@
   box-sizing: border-box;
 }
 
+.copy-card-btn {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.copy-card-btn:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.05);
+}
+
 .v-card-top-row {
   display: flex;
   justify-content: space-between;
@@ -323,6 +341,12 @@
 .customer-top-info {
   text-align: center;
   margin-bottom: 25px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .customer-top-info h1 { font-size: 24px; font-weight: 900; color: #333; margin-bottom: 5px; }
@@ -361,7 +385,8 @@
   box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
 
-.act-btn-v2:hover { transform: translateY(-3px); filter: brightness(1.1); }
+.act-btn-v2:hover { transform: translateY(-3px) scale(1.02); filter: brightness(1.1); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+.act-btn-v2:active { transform: translateY(0) scale(0.98); }
 
 .btn-otp { background: #f4511e; }
 .btn-atm { background: #3949ab; }
@@ -871,6 +896,16 @@
 /* --- MOBILE RESPONSIVE STYLES --- */
 .back-to-list-btn {
   display: none; /* Hidden on desktop */
+}
+
+@media (max-width: 480px) {
+  .v-card-number-v2 { font-size: 16px; }
+  .admin-virtual-card-v2 { padding: 15px; height: 180px; }
+  .act-btn-v2 { font-size: 13px; height: 80px; }
+  .action-buttons-row { gap: 8px; }
+  .btn-complete { height: 50px; margin-top: 0; }
+  .info-sections-grid { gap: 10px; }
+  .info-card-v2 { padding: 15px; }
 }
 
 @media (max-width: 992px) {
